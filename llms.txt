@@ -1,0 +1,28 @@
+# Camber Labs — Indie Game-Dev Studios, Engine Math & SaaS Calculators
+
+> Five browser-tested offline indie game-dev studios (£6.99 each or £16.99 5-in-1 Bundle) plus 155 free interactive game storefront & engine math calculators.
+
+## Cozy Indie Micro-Games (Free Browser Demos + Full Editions)
+- **Cinderpit** (£3.99): Swarm-shredding dark-pixel survivor roguelike with rapid level-up evolutions & 9:16 clip recorder — Play Demo: https://camberlabs.github.io/games/cinderpit/ | Buy: https://camberlabs.itch.io/cinderpit
+- **Sunlit Creek** (£2.99): A quiet afternoon creek where fish nibble at your bobber — Play Demo: https://camberlabs.github.io/games/sunlit-creek/ | Buy: https://camberlabs.itch.io/sunlit-creek
+- **pip & clover** (£3.49): Roll carved ivory dice on green tavern felt and stack sneaky lucky charms — Play Demo: https://camberlabs.github.io/games/pip-and-clover/ | Buy: https://camberlabs.itch.io/pip-and-clover
+- **Mosshold** (£3.99): Build a mossy hamlet by day and guard your lantern keep at dusk — Play Demo: https://camberlabs.github.io/games/mosshold/ | Buy: https://camberlabs.itch.io/mosshold
+
+## Commercial Desktop Studios (Instant Offline .ZIP + Free HTML5 Browser Demos)
+- **Camber Labs Game-Maker Toolkit (All 5 Tools)** (£16.99, Save 51%): https://itch.io/s/218099/camber-labs-game-maker-toolkit-all-5-tools
+- **BitForge Studio** (£6.99): Retro SFX, Chiptune Tracker & Procedural WAV Audio Generator — https://camberlabs.itch.io/bitforge-studio
+- **TileForge Studio** (£6.99): 2D Pixel Autotile, 47-Tile Blob/Wang Bitmask & Tiled .tmj Dungeon Generator — https://camberlabs.itch.io/tileforge-studio
+- **JuiceForge VFX Lab** (£6.99): 2D Pixel Particle, Hit-Spark, Explosion & Animated Flipbook PNG Exporter — https://camberlabs.itch.io/juiceforge-vfx-lab
+- **UIForge Studio** (£6.99): 9-Slice HUD, Pixel Panel, Health Bar, Dialogue Box & Voice-Blip WAV Builder — https://camberlabs.itch.io/uiforge-hud-studio
+- **BalanceForge Simulator** (£6.99): Monte Carlo RPG Combat, Loot Economy, Deckbuilder Draw & XP Curve Lab — https://camberlabs.itch.io/balanceforge-simulator
+- **2026 Founder Margin & Pricing CFO Kit** ($19): https://camberlabs.gumroad.com/l/founder-cfo-kit-2026?wanted=true
+
+## Free Calculator Hubs & Machine-Readable Feeds
+- Studio Hub: https://camberlabs.github.io/
+- Cozy Micro-Games Arcade: https://camberlabs.github.io/games/
+- 5-in-1 Suite Comparison: https://camberlabs.github.io/suite/
+- All 155 Game-Dev Calculators: https://camberlabs.github.io/directory/
+- MarginPilot SaaS & Creator Fee Network (201 calculators): https://camberlabs.github.io/marginpilot/
+- Full LLM Dataset: https://camberlabs.github.io/llms-full.txt
+- MarginPilot LLM Dataset: https://camberlabs.github.io/marginpilot/llms-full.txt
+- Storefront Fees JSON API: https://camberlabs.github.io/api/2026-game-store-fees.json

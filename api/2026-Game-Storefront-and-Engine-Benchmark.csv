@@ -1,0 +1,12 @@
+Storefront,Category,Base_Cut_Pct,Upfront_Fee_USD,Payout_Schedule,Calculator_URL
+"Steam (Valve)","PC Digital Storefront",30,100,"Monthly (~30 days after month-end; $100 min threshold)","https://camberlabs.github.io/storefronts/steam-revenue-calculator/"
+"itch.io (Direct Stripe Mode)","Indie Creator Storefront",0,0,"Direct to your Stripe/PayPal bank (~2–7 business days, £1+ settlement)","https://camberlabs.github.io/storefronts/itch-io-revenue-calculator/"
+"Epic Games Store","PC Digital Storefront",12,100,"Quarterly / monthly depending on settlement threshold ($100 min)","https://camberlabs.github.io/storefronts/epic-games-store-revenue-calculator/"
+"GOG.com","PC DRM-Free Storefront",30,0,"Monthly/quarterly post-clearance accounting","https://camberlabs.github.io/storefronts/gog-revenue-calculator/"
+"Humble Store (Direct / Widget)","PC Keys & Creator Widget",25,0,"Monthly ($100 ACH/PayPal threshold)","https://camberlabs.github.io/storefronts/humble-store-revenue-calculator/"
+"Apple App Store","Mobile Storefront",15,99,"~33 days after Apple fiscal month-end","https://camberlabs.github.io/storefronts/apple-app-store-revenue-calculator/"
+"Google Play Store","Mobile Storefront",15,25,"Monthly (~15th of following month)","https://camberlabs.github.io/storefronts/google-play-revenue-calculator/"
+"Nintendo Switch eShop","Console Storefront",30,0,"Monthly / quarterly by region (NOA/NOE/NCL)","https://camberlabs.github.io/storefronts/nintendo-eshop-revenue-calculator/"
+"PlayStation Store (PS4/PS5)","Console Storefront",30,0,"Monthly / quarterly net remittance","https://camberlabs.github.io/storefronts/playstation-store-revenue-calculator/"
+"Microsoft Store / Xbox","Console & PC Storefront",12,19,"Monthly ($50 minimum payout threshold)","https://camberlabs.github.io/storefronts/xbox-store-revenue-calculator/"
+"# 5-in-1 Indie Dev Suite (£16.99)","Desktop Suite Bundle",0,16.99,"Instant Download","https://itch.io/s/218099/camber-labs-game-maker-toolkit-all-5-tools"

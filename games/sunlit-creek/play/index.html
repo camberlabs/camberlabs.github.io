@@ -1,0 +1,1498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Sunlit Creek - Cozy Fishing (Web Demo)</title>
+<style>
+  * { box-sizing: border-box; user-select: none; -webkit-user-select: none; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #1a1c2c;
+    background-image: radial-gradient(circle at 50% 45%, #2d2228 0%, #1a1c2c 78%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-family: monospace;
+  }
+  #stage {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 6px;
+    background: #7a444a;
+    border: 3px solid #1a1c2c;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55), inset 0 0 0 2px #e8c170;
+    border-radius: 4px;
+  }
+  canvas#game {
+    display: block;
+    width: 960px;
+    height: 540px;
+    max-width: calc(100vw - 20px);
+    max-height: calc(100vh - 52px);
+    aspect-ratio: 16 / 9;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    cursor: pointer;
+    background: #3b7d8c;
+  }
+  #demo-link-bar {
+    display: none;
+    margin-top: 6px;
+    padding: 4px 10px;
+    background: #ffd599;
+    border: 2px solid #1a1c2c;
+    color: #1a1c2c;
+    font-size: 12px;
+    font-weight: bold;
+    letter-spacing: 0.4px;
+  }
+  #demo-link-bar a {
+    color: #b13e53;
+    text-decoration: underline;
+  }
+</style>
+</head>
+<body>
+<div id="stage">
+  <canvas id="game" width="240" height="135"></canvas>
+  <div id="demo-link-bar">Full Edition (&pound;2.99) includes 4 Waters, 28 Fish + 4 Leviathans, 5 Rods &amp; Zen Mode: <a href="https://camberlabs.itch.io/sunlit-creek" target="_blank" rel="noopener noreferrer">camberlabs.itch.io/sunlit-creek</a></div>
+</div>
+<script>
+(function () {
+  'use strict';
+  const DATA = {"FULL_EDITION":false,"ITCH_URL":"https://camberlabs.itch.io/sunlit-creek","P":{"ink":"#1a1c2c","plum":"#5d275d","rose":"#b13e53","coral":"#ef7d57","creamGold":"#ffd599","honey":"#ffcd75","marigold":"#f4b41b","sandWood":"#e8c170","cedarMid":"#9e5854","cedarDark":"#7a444a","limeSage":"#a7f070","grassSage":"#38b764","pineDeep":"#257179","creekTeal":"#3b7d8c","indigoDusk":"#29366f","skyBlue":"#3b5dc9","riverBlue":"#41a6f6","cyanShimmer":"#73eff7","creamWhite":"#f4f4f4","mist":"#94b0c2","slate":"#566c86","darkSlate":"#333c57"},"FONT":{"0":["01110","10011","10101","10101","11001","10001","01110"],"1":["00100","01100","00100","00100","00100","00100","01110"],"2":["01110","10001","00001","00110","01000","10000","11111"],"3":["11110","00001","00001","01110","00001","00001","11110"],"4":["00010","00110","01010","10010","11111","00010","00010"],"5":["11111","10000","10000","11110","00001","00001","11110"],"6":["01110","10000","10000","11110","10001","10001","01110"],"7":["11111","00001","00010","00100","01000","01000","01000"],"8":["01110","10001","10001","01110","10001","10001","01110"],"9":["01110","10001","10001","01111","00001","00001","01110"],"A":["01110","10001","10001","11111","10001","10001","10001"],"B":["11110","10001","10001","11110","10001","10001","11110"],"C":["01111","10000","10000","10000","10000","10000","01111"],"D":["11110","10001","10001","10001","10001","10001","11110"],"E":["11111","10000","10000","11110","10000","10000","11111"],"F":["11111","10000","10000","11110","10000","10000","10000"],"G":["01111","10000","10000","10111","10001","10001","01110"],"H":["10001","10001","10001","11111","10001","10001","10001"],"I":["01110","00100","00100","00100","00100","00100","01110"],"J":["00111","00010","00010","00010","10010","10010","01100"],"K":["10001","10010","10100","11000","10100","10010","10001"],"L":["10000","10000","10000","10000","10000","10000","11111"],"M":["10001","11011","10101","10101","10001","10001","10001"],"N":["10001","11001","10101","10011","10001","10001","10001"],"O":["01110","10001","10001","10001","10001","10001","01110"],"P":["11110","10001","10001","11110","10000","10000","10000"],"Q":["01110","10001","10001","10001","10101","10010","01101"],"R":["11110","10001","10001","11110","10100","10010","10001"],"S":["01111","10000","10000","01110","00001","00001","11110"],"T":["11111","00100","00100","00100","00100","00100","00100"],"U":["10001","10001","10001","10001","10001","10001","01110"],"V":["10001","10001","10001","10001","10001","01010","00100"],"W":["10001","10001","10001","10101","10101","11011","10001"],"X":["10001","10001","01010","00100","01010","10001","10001"],"Y":["10001","10001","01010","00100","00100","00100","00100"],"Z":["11111","00001","00010","00100","01000","10000","11111"],"&":["01100","10010","10100","01000","10101","10010","01101"],".":["00000","00000","00000","00000","00000","01100","01100"],"!":["00100","00100","00100","00100","00100","00000","00100"],"?":["01110","10001","00001","00110","00100","00000","00100"],"+":["00000","00100","00100","11111","00100","00100","00000"],"-":["00000","00000","00000","11111","00000","00000","00000"],":":["00000","00100","00100","00000","00100","00100","00000"],"/":["00001","00010","00010","00100","01000","01000","10000"],"'":["00100","00100","00010","00000","00000","00000","00000"],",":["00000","00000","00000","00000","00000","00100","01000"],"<":["00010","00100","01000","10000","01000","00100","00010"],">":["01000","00100","00010","00001","00010","00100","01000"],"[":["01110","01000","01000","01000","01000","01000","01110"],"]":["01110","00010","00010","00010","00010","00010","01110"],"(":["00010","00100","01000","01000","01000","00100","00010"],")":["01000","00100","00010","00010","00010","00100","01000"],"%":["11001","11010","00010","00100","01000","01011","10011"],"*":["00000","10101","01110","11111","01110","10101","00000"],"£":["00110","01001","01000","11110","01000","01001","11111"]," ":["00000","00000","00000","00000","00000","00000","00000"]},"WATERS":[{"id":"sunny_creek","name":"SUNNY CREEK","shortName":"SUNNY","demoUnlocked":true,"skyTop":"#41a6f6","skyMid":"#73eff7","skyBot":"#ffd599","sunColor":"#f4f4f4","sunHalo":"#ffd599","hillFar":"#3b7d8c","hillNear":"#257179","bankTop":"#38b764","bankHighlight":"#a7f070","waterTop":"#3b7d8c","waterDeep":"#257179","shimmerA":"#73eff7","shimmerB":"#f4f4f4","ambientType":"butterflies","hasCottage":true,"isNight":false,"musicScale":[261.63,293.66,329.63,392,440,523.25],"musicBass":[130.81,164.81,196,146.83]},{"id":"amber_dusk","name":"AMBER DUSK","shortName":"AMBER","demoUnlocked":true,"skyTop":"#29366f","skyMid":"#ef7d57","skyBot":"#f4b41b","sunColor":"#ffd599","sunHalo":"#f4b41b","hillFar":"#5d275d","hillNear":"#7a444a","bankTop":"#257179","bankHighlight":"#38b764","waterTop":"#3b7d8c","waterDeep":"#29366f","shimmerA":"#f4b41b","shimmerB":"#ffd599","ambientType":"fireflies","hasCottage":true,"isNight":false,"musicScale":[293.66,329.63,392,440,523.25,587.33],"musicBass":[174.61,196,220,146.83]},{"id":"rainy_reeds","name":"RAINY REEDS","shortName":"RAINY","demoUnlocked":false,"skyTop":"#333c57","skyMid":"#566c86","skyBot":"#94b0c2","sunColor":"#94b0c2","sunHalo":"#f4f4f4","hillFar":"#333c57","hillNear":"#257179","bankTop":"#257179","bankHighlight":"#38b764","waterTop":"#257179","waterDeep":"#333c57","shimmerA":"#94b0c2","shimmerB":"#73eff7","ambientType":"rain","hasCottage":false,"isNight":false,"musicScale":[293.66,349.23,392,440,523.25,587.33],"musicBass":[146.83,174.61,196,130.81]},{"id":"starlight_cove","name":"STARLIGHT COVE","shortName":"STAR","demoUnlocked":false,"skyTop":"#1a1c2c","skyMid":"#29366f","skyBot":"#3b5dc9","sunColor":"#f4f4f4","sunHalo":"#73eff7","hillFar":"#1a1c2c","hillNear":"#29366f","bankTop":"#257179","bankHighlight":"#3b7d8c","waterTop":"#29366f","waterDeep":"#1a1c2c","shimmerA":"#73eff7","shimmerB":"#ffd599","ambientType":"stars","hasCottage":false,"isNight":true,"musicScale":[220,261.63,293.66,329.63,392,440],"musicBass":[110,130.81,146.83,164.81]}],"RODS":[{"id":"bamboo","name":"BAMBOO POLE","icon":"bamboo","price":0,"demoUnlocked":true,"barHeight":28,"biteWindow":1.45,"rareBonus":0,"calmFactor":1,"castReach":1,"desc":"WARM HAND-CARVED STARTER"},{"id":"willow","name":"WILLOW ROD","icon":"willow","price":55,"demoUnlocked":true,"barHeight":34,"biteWindow":1.65,"rareBonus":0.1,"calmFactor":0.9,"castReach":1.06,"desc":"WIDER BAR & SOFT FLEX"},{"id":"cedar","name":"CEDAR FLY ROD","icon":"cedar","price":140,"demoUnlocked":true,"barHeight":39,"biteWindow":1.85,"rareBonus":0.22,"calmFactor":0.82,"castReach":1.12,"desc":"RARE LURE & LONG CAST"},{"id":"amber","name":"AMBER SPINNER","icon":"amber","price":300,"demoUnlocked":false,"barHeight":45,"biteWindow":2.05,"rareBonus":0.35,"calmFactor":0.72,"castReach":1.18,"desc":"STEADIES DARTING FISH"},{"id":"starlight","name":"STARLIGHT ROD","icon":"starlight","price":560,"demoUnlocked":false,"barHeight":52,"biteWindow":2.3,"rareBonus":0.5,"calmFactor":0.62,"castReach":1.25,"desc":"CALLS RARE LEVIATHANS"}],"SPECIES":[{"id":"creek_chub","name":"CREEK CHUB","waterId":"sunny_creek","shape":"chub","price":10,"rarity":"common","colors":{"1":"#257179","2":"#94b0c2","3":"#f4f4f4","4":"#e8c170","o":"#1a1c2c","e":"#1a1c2c"},"inDemo":true,"isLeviathan":false,"minOz":3,"maxOz":9,"agility":0.72,"note":"DARTS BY THE PIER POSTS"},{"id":"sun_bluegill","name":"BLUEGILL","waterId":"sunny_creek","shape":"sunfish","price":14,"rarity":"common","colors":{"1":"#3b7d8c","2":"#41a6f6","3":"#f4b41b","4":"#ef7d57","o":"#1a1c2c","e":"#1a1c2c"},"inDemo":true,"isLeviathan":false,"minOz":5,"maxOz":14,"agility":0.8,"note":"BRIGHT GOLDEN BELLY"},{"id":"sunlit_perch","name":"SUN PERCH","waterId":"sunny_creek","shape":"perch","price":18,"rarity":"common","colors":{"1":"#38b764","2":"#f4b41b","3":"#ffd599","4":"#ef7d57","o":"#1a1c2c","e":"#1a1c2c"},"inDemo":true,"isLeviathan":false,"minOz":8,"maxOz":22,"agility":0.88,"note":"STRIPED REED STALKER"},{"id":"golden_trout","name":"GOLD TROUT","waterId":"sunny_creek","shape":"trout","price":24,"rarity":"uncommon","colors":{"1":"#3b7d8c","2":"#73eff7","3":"#ffd599","4":"#ef7d57","o":"#1a1c2c","e":"#1a1c2c"},"inDemo":true,"isLeviathan":false,"minOz":12,"maxOz":34,"agility":1,"note":"LEAPS THROUGH SUNBEAMS"},{"id":"amber_shiner","name":"AMBER DACE","waterId":"amber_dusk","shape":"chub","price":16,"rarity":"common","colors":{"1":"#ef7d57","2":"#f4b41b","3":"#f4f4f4","4":"#ffd599","o":"#1a1c2c","e":"#1a1c2c"},"inDemo":true,"isLeviathan":false,"minOz":4,"maxOz":11,"agility":0.82,"note":"GLINTS AT SUNSET"},{"id":"creek_catfish","name":"CREEK CAT","waterId":"amber_dusk","shape":"catfish","price":30,"rarity":"uncommon","colors":{"1":"#29366f","2":"#566c86","3":"#94b0c2","4":"#e8c170","o":"#1a1c2c","e":"#1a1c2c"},"inDemo":true,"isLeviathan":false,"minOz":22,"maxOz":58,"agility":1.05,"note":"WAKES AT LANTERN LIGHT"},{"id":"sunset_koi","name":"AMBER KOI","waterId":"amber_dusk","shape":"carp","price":44,"rarity":"rare","colors":{"1":"#b13e53","2":"#f4f4f4","3":"#ffd599","4":"#f4b41b","o":"#1a1c2c","e":"#1a1c2c"},"inDemo":true,"isLeviathan":false,"minOz":24,"maxOz":60,"agility":1.18,"note":"CALICO RIVER TREASURE"},{"id":"redwood_salmon","name":"RED SALMON","waterId":"amber_dusk","shape":"trout","price":52,"rarity":"rare","colors":{"1":"#257179","2":"#b13e53","3":"#ef7d57","4":"#ffd599","o":"#1a1c2c","e":"#1a1c2c"},"inDemo":true,"isLeviathan":false,"minOz":40,"maxOz":96,"agility":1.28,"note":"CRIMSON DUSK RUNNER"}],"SPRITES":{"FISHER":{"idle":["....oooooo....","...oHHHHhho...","..oHHHHhhHho..","..orrrrrrrro..","oooHHHHHHHHooo","oohhhhhhhhhhoo","..oossccssso..","...osssosss...","...osssssso...","...oottttoo...","..otttvvttto..","..ottvvvvvto..","..oss.vvvvso..","...oo.vvvv.o..","....oppppppo..","....opp.pppo..","....opp..ppo..","....obb..bbo..","....obbo.obbo.","....oooo.oooo."],"windup":["...oooooo.....","..oHHHHhho....",".oHHHHhhHho...",".orrrrrrrro...","ooHHHHHHHHooo.","oohhhhhhhhhhoo","..oossccssso..","...osssosss...","..oosssssso...",".osotttttoo...","oso.ttvvttto..",".o..tvvvvvto..","....oovvvvso..",".....ovvvv.o..","....oppppppo..","....opp.pppo..","....opp..ppo..","....obb..bbo..","....obbo.obbo.","....oooo.oooo."],"reel":[".....oooooo...","....oHHHHhho..","...oHHHHhhHho.","...orrrrrrrro.",".oooHHHHHHHHoo",".oohhhhhhhhhho","...oossccssso.","....osssosss..","....osssssso..","....oottttoo..","...otttvvtttoo","...ottvvvvvtso","....oovvvvvsoo",".....ovvvv.o..","....oppppppo..","...oopp.pppo..","...opp...ppo..","...obb...bbo..","...obbo..obbo.","...oooo..oooo."]},"FISHER_MAP":{"o":"#1a1c2c","h":"#f4b41b","H":"#e8c170","r":"#b13e53","s":"#ffd599","c":"#ef7d57","t":"#3b7d8c","v":"#7a444a","p":"#29366f","b":"#5d275d","w":"#f4f4f4"},"BOBBER":[".ooo.","orrro","orwro","owwwo",".ooo."],"BOBBER_MAP":{"o":"#1a1c2c","r":"#b13e53","w":"#f4f4f4"},"CLOUD_L":[".........oooooo...............",".......oowwwwwwoo....ooooo....",".....oowwwwwwwwwwooowwwwwwoo..","...oowwwwwwwwwwwwwwwwwwwwwwwo.",".oowwwwwwwwwwwwwwwwwwwwwwwwwwo","owwwggggggggggggggggggggwwwwwo","owggggggggggggggggggggggggggwo",".occcccccccccccccccccccccccco.","..oooooooooooooooooooooooooo.."],"CLOUD_S":[".....ooooo........","...oowwwwwoo..ooo.",".oowwwwwwwwwowwwwo","owwwggggggggggggwo","occcccccccccccccco",".oooooooooooooooo."],"CLOUD_DAY":{"o":"#566c86","w":"#f4f4f4","g":"#ffd599","c":"#94b0c2"},"CLOUD_GOLD":{"o":"#5d275d","w":"#f4f4f4","g":"#ffd599","c":"#ef7d57"},"PINE":[".......o.......","......oLo......",".....oLggo.....","....oLggggo....",".....oLgpo.....","....oLggggo....","...oLggggggo...","..oLggppppggo..","....oLggggo....","...oLggggggo...","..oLggggggggo..",".oLgggppppgggo.","...oLggggggo...","..oLggggggggo..",".oLggggggggggo.","oLggggppppggggo",".ooooovvvooooo.","......ovvo.....","......ovvo.....","......oooo....."],"WILLOW":[".....oooooooooo.....","...ooLLggggggLLoo...","..oLggggggggggggLo..",".oLggppggggggppggLo.","oLggppppggggppppggLo","oLgppgppggggppgppgLo","oLgpgogpggggpgogpgLo",".oggogoggvvggogoggo.",".ogpog.oovvoo.gopgo.",".o.po...ovvo...op.o.","...o....ovvo....o...","........ovvo........","........oooo........"],"TREE_MAP":{"o":"#1a1c2c","L":"#a7f070","g":"#38b764","p":"#257179","v":"#7a444a"},"COTTAGE":["..............oo......",".............orro.....","......oooooooooo......","....oorrrrrrrrrroo....","..oorrrrrrrrrrrrrroo..",".orrrrrrrrrrrrrrrrrro.","ooorrrrrrrrrrrrrrrrooo","..oHHHHHHHHHHHHHHHHo..","..oHHooooHHHHooooHHo..","..oHHoyyoHHHHoyyoHHo..","..oHHoyyoHHHHoyyoHHo..","..oHHooooHHHHooooHHo..","..oHHHHHHovvoHHHHHHo..","..oHHHHHHovvoHHHHHHo..","..oooooooooooooooooo.."],"COTTAGE_MAP":{"o":"#1a1c2c","r":"#b13e53","H":"#e8c170","y":"#f4b41b","v":"#7a444a"},"FISH":{"trout":["....oooooo....","..oo111111oo..",".o1114222e21o.","o1o2244422222o","o1o2333333333o",".o1o3343333oo.","..oo13333oo...","....ooooo....."],"perch":["....ooooo.....","..oo14141oo...",".o1141412e1o..","o1o242422222o.","o1o343433333o.",".o1o334333oo..","..oo3333oo....","....oooo......"],"carp":["...ooooooo....",".oo1112221oo..","o1o2224422e2o.","o1o2234433222o","o1o333333333oo",".o1o334333oo..","..oo3333oo....","....oooo......"],"catfish":["...ooooooo....",".oo1111111oo..","o1o122222e21oo","o1o222422222o.","o1o33333333o..",".o1o33333oo...","..oo333oo.....","....ooo......."],"pike":["..oooooooooo..",".o11111222e1o.","o1o2242422222o","o1o333333333oo",".o1o334333oo..","..oooooooo...."],"eel":["....oooo......","..oo1111oo..oo",".o11222221oo1o","o1o33443322e1o",".oo333333333o.","...ooooooooo.."],"sunfish":["....ooooo.....","..oo11411oo...",".o1122222e1o..","o1o224422222o.","o1o333333333o.","o1o3343333oo..",".oo33333oo....","...ooooo......"],"chub":[".....oooo.....","...oo1111oo...","..o112222e1o..",".o1o23333332o.",".o1o334333oo..","...oo333oo....",".....ooo......"],"leviathan_sturgeon":[".....oooooooooo...","...oo1141141141oo.","..o11222222222e21o","oo1o2422422422222o","o11o333333333333oo","o1o33344333333oo..",".oo333333333oo....","...ooooooooo......"],"leviathan_moonfin":["....ooo...oooooo..","..oo111ooo114111oo",".o1122211122222e2o","o1o24222422422222o","o1o3333333333333oo",".o1o3344333333oo..","..oo43333333oo....","....oooooooo......"]},"RODS":{"bamboo":["........oo",".......oHo","......oHo.",".....oVo..","....oHo...","...oHo....","..oVo.....",".oHo......","oVo.......","oo........"],"willow":["........oo",".......oLo","......ogo.",".....ogo..","....oHo...","...ogo....","..oVo.....",".oVo......","oVo.......","oo........"],"cedar":["........oo",".......oYo","......oro.",".....oro..","....oHo...","...oro....","..oro.....",".oVo......","oYo.......","oo........"],"amber":["........oo",".......oYo","......oYo.",".....oCo..","....oYo...","...oHo....","..oCo.....",".oVo......","oYo.......","oo........"],"starlight":[".......ooo","......oBwo",".....oBoo.","....oIo...","...oBo....","..oIo.....",".oYo......","oIo.......","oYo.......","oo........"]},"ROD_MAP":{"o":"#1a1c2c","H":"#e8c170","V":"#7a444a","L":"#a7f070","g":"#38b764","r":"#b13e53","Y":"#f4b41b","C":"#ef7d57","B":"#73eff7","I":"#29366f","w":"#f4f4f4"},"ICONS":{"coin":[".ooooo.","oYYYYYo","oYHwHYo","oYHwHYo","oYYYYYo",".ooooo."],"star":["...o...","..oYo..","ooYYYoo",".oYYYo.",".oYoYo.","o.....o"],"lock":["..ooo..",".o...o.",".o...o.","ooooooo","oVVYVVo","oVVVVVo","ooooooo"],"music":["...oooo","...oBBo","...o..o",".ooo.oo","oBBoBBo",".oo..oo"],"sfx":["..o..o.",".oo.o..","ooo..o.","ooo..o.",".oo.o..","..o..o."]}}};
+  const FULL_EDITION = DATA.FULL_EDITION;
+  const P = DATA.P;
+  const W = 240;
+  const H = 135;
+
+  const canvas = document.getElementById('game');
+  const ctx = canvas.getContext('2d');
+  ctx.imageSmoothingEnabled = false;
+  const demoBar = document.getElementById('demo-link-bar');
+
+  const SAVE_KEY = FULL_EDITION ? 'sunlit_creek_full_v1' : 'sunlit_creek_demo_v1';
+
+  // --- Persistence ---
+  function loadSave() {
+    const fallback = {
+      coins: 0,
+      ownedRods: ['bamboo'],
+      equippedRod: 'bamboo',
+      waterId: 'sunny_creek',
+      journal: {},
+      totalCaught: 0,
+      musicOn: true,
+      sfxOn: true
+    };
+    try {
+      const raw = localStorage.getItem(SAVE_KEY);
+      if (!raw) return fallback;
+      const parsed = JSON.parse(raw);
+      return Object.assign(fallback, parsed);
+    } catch (_) {
+      return fallback;
+    }
+  }
+
+  const save = loadSave();
+  // Guard saved water/rod against edition constraints
+  if (!DATA.WATERS.some((w) => w.id === save.waterId && (FULL_EDITION || w.demoUnlocked))) {
+    save.waterId = 'sunny_creek';
+  }
+  if (!DATA.RODS.some((r) => r.id === save.equippedRod && (FULL_EDITION || r.demoUnlocked))) {
+    save.equippedRod = 'bamboo';
+  }
+
+  function persistSave() {
+    try {
+      localStorage.setItem(SAVE_KEY, JSON.stringify(save));
+    } catch (_) {}
+    if ((window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost') && window.parent === window && typeof fetch === 'function') {
+      fetch('/api/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(save)
+      }).catch(() => {});
+    }
+  }
+
+  if ((window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost') && window.parent === window && typeof fetch === 'function') {
+    fetch('/api/save').then((r) => r.ok ? r.json() : null).then((diskSave) => {
+      if (diskSave && typeof diskSave === 'object' && typeof diskSave.coins === 'number') {
+        if ((diskSave.coins || 0) >= (save.coins || 0)) {
+          Object.assign(save, diskSave);
+          if (!DATA.WATERS.some((w) => w.id === save.waterId && (FULL_EDITION || w.demoUnlocked))) save.waterId = 'sunny_creek';
+          if (!DATA.RODS.some((r) => r.id === save.equippedRod && (FULL_EDITION || r.demoUnlocked))) save.equippedRod = 'bamboo';
+          persistSave();
+        }
+      }
+    }).catch(() => {});
+    setInterval(() => {
+      fetch('/api/heartbeat', { method: 'POST' }).catch(() => {});
+    }, 3000);
+    window.addEventListener('pagehide', () => {
+      if (navigator.sendBeacon) navigator.sendBeacon('/api/quit', '{}');
+    });
+  }
+
+  // --- Pre-render sprite caches onto offscreen mini-canvases for fast crisp blitting ---
+  const spriteCache = new Map();
+  function getMatrixCanvas(key, rows, colorMap, flipX) {
+    const cacheKey = key + (flipX ? '_f' : '');
+    if (spriteCache.has(cacheKey)) return spriteCache.get(cacheKey);
+    const h = rows.length;
+    const w = rows[0] ? rows[0].length : 0;
+    const c = document.createElement('canvas');
+    c.width = w;
+    c.height = h;
+    const cctx = c.getContext('2d');
+    for (let r = 0; r < h; r++) {
+      const row = rows[r];
+      for (let col = 0; col < row.length; col++) {
+        const ch = row[flipX ? row.length - 1 - col : col];
+        if (!ch || ch === '.' || ch === ' ') continue;
+        const hex = colorMap[ch];
+        if (!hex) continue;
+        cctx.fillStyle = hex;
+        cctx.fillRect(col, r, 1, 1);
+      }
+    }
+    spriteCache.set(cacheKey, c);
+    return c;
+  }
+
+  function drawSprite(key, rows, colorMap, x, y, scale, flipX) {
+    const sc = getMatrixCanvas(key, rows, colorMap, !!flipX);
+    const s = scale || 1;
+    ctx.drawImage(sc, Math.round(x), Math.round(y), sc.width * s, sc.height * s);
+  }
+
+  function drawSilhouette(key, rows, hex, x, y, scale, flipX) {
+    const map = { o: hex, 1: hex, 2: hex, 3: hex, 4: hex, e: hex };
+    drawSprite(key + '_sil_' + hex, rows, map, x, y, scale, flipX);
+  }
+
+  // --- Pixel Font Renderer ---
+  function measureText(text, scale) {
+    const s = scale || 1;
+    if (!text) return 0;
+    return text.length * 6 * s - s;
+  }
+
+  function plotTextRaw(x, y, str, hex, scale) {
+    ctx.fillStyle = hex;
+    let cx = Math.round(x);
+    const sy = Math.round(y);
+    const s = scale || 1;
+    for (let i = 0; i < str.length; i++) {
+      const g = DATA.FONT[str[i]] || DATA.FONT[' '];
+      for (let row = 0; row < 7; row++) {
+        const line = g[row];
+        for (let col = 0; col < 5; col++) {
+          if (line[col] === '1') {
+            ctx.fillRect(cx + col * s, sy + row * s, s, s);
+          }
+        }
+      }
+      cx += 6 * s;
+    }
+  }
+
+  function drawText(x, y, text, fg, outline, scale) {
+    const str = String(text || '').toUpperCase();
+    const s = scale || 1;
+    if (outline) {
+      for (let dy = -1; dy <= 1; dy++) {
+        for (let dx = -1; dx <= 1; dx++) {
+          if (dx === 0 && dy === 0) continue;
+          plotTextRaw(x + dx * s, y + dy * s, str, outline, s);
+        }
+      }
+    }
+    plotTextRaw(x, y, str, fg, s);
+  }
+
+  function drawCenteredText(y, text, fg, outline, scale) {
+    const s = scale || 1;
+    const w = measureText(String(text || ''), s);
+    drawText(Math.round((W - w) / 2), y, text, fg, outline, s);
+  }
+
+  function pxRect(x, y, w, h, hex) {
+    ctx.fillStyle = hex;
+    ctx.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h));
+  }
+
+  function drawDitherRect(x, y, w, h, hexA, hexB) {
+    pxRect(x, y, w, h, hexA);
+    ctx.fillStyle = hexB;
+    const x0 = Math.round(x);
+    const y0 = Math.round(y);
+    const rw = Math.round(w);
+    const rh = Math.round(h);
+    for (let py = 0; py < rh; py++) {
+      for (let px = (py % 2); px < rw; px += 2) {
+        ctx.fillRect(x0 + px, y0 + py, 1, 1);
+      }
+    }
+  }
+
+  function drawPixelLine(x0, y0, x1, y1, hex) {
+    ctx.fillStyle = hex;
+    let ax = Math.round(x0);
+    let ay = Math.round(y0);
+    const bx = Math.round(x1);
+    const by = Math.round(y1);
+    const dx = Math.abs(bx - ax);
+    const dy = Math.abs(by - ay);
+    const sx = ax < bx ? 1 : -1;
+    const sy = ay < by ? 1 : -1;
+    let err = dx - dy;
+    let guard = 0;
+    while (guard++ < 400) {
+      ctx.fillRect(ax, ay, 1, 1);
+      if (ax === bx && ay === by) break;
+      const e2 = 2 * err;
+      if (e2 > -dy) { err -= dy; ax += sx; }
+      if (e2 < dx) { err += dx; ay += sy; }
+    }
+  }
+
+  function drawWoodPanel(x, y, w, h, fill, border, trim) {
+    pxRect(x, y, w, h, border || P.ink);
+    pxRect(x + 1, y + 1, w - 2, h - 2, trim || P.sandWood);
+    pxRect(x + 2, y + 2, w - 4, h - 4, fill || P.cedarDark);
+    pxRect(x + 2, y + 2, 1, 1, P.marigold);
+    pxRect(x + w - 3, y + 2, 1, 1, P.marigold);
+    pxRect(x + 2, y + h - 3, 1, 1, P.marigold);
+    pxRect(x + w - 3, y + h - 3, 1, 1, P.marigold);
+  }
+
+  function drawParchmentPanel(x, y, w, h) {
+    drawWoodPanel(x, y, w, h, P.cedarDark, P.ink, P.cedarMid);
+    pxRect(x + 4, y + 4, w - 8, h - 8, P.ink);
+    pxRect(x + 5, y + 5, w - 10, h - 10, P.creamGold);
+    pxRect(x + 6, y + 6, w - 12, h - 12, P.creamWhite);
+  }
+
+  // --- WebAudio Cozy Chiptune & Nature Sound Engine ---
+  let audioCtx = null;
+  let musicTimer = null;
+  let musicStep = 0;
+
+  function ensureAudio() {
+    if (!audioCtx) {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (AC) audioCtx = new AC();
+    }
+    if (audioCtx && audioCtx.state === 'suspended') {
+      audioCtx.resume().catch(function () {});
+    }
+    return audioCtx;
+  }
+
+  function playTone(freq, duration, type, gainPeak, delay) {
+    if (!save.sfxOn && type !== 'music') return;
+    const ac = ensureAudio();
+    if (!ac || freq <= 0) return;
+    const t0 = ac.currentTime + (delay || 0);
+    const osc = ac.createOscillator();
+    const g = ac.createGain();
+    osc.type = type === 'music' ? 'triangle' : (type || 'sine');
+    osc.frequency.setValueAtTime(freq, t0);
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.linearRampToValueAtTime(gainPeak || 0.08, t0 + 0.015);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + duration);
+    osc.connect(g);
+    g.connect(ac.destination);
+    osc.start(t0);
+    osc.stop(t0 + duration + 0.02);
+  }
+
+  function playPlop(pitch) {
+    if (!save.sfxOn) return;
+    const ac = ensureAudio();
+    if (!ac) return;
+    const t0 = ac.currentTime;
+    const osc = ac.createOscillator();
+    const g = ac.createGain();
+    osc.type = 'sine';
+    const base = pitch || 360;
+    osc.frequency.setValueAtTime(base, t0);
+    osc.frequency.exponentialRampToValueAtTime(base * 1.9, t0 + 0.09);
+    g.gain.setValueAtTime(0.001, t0);
+    g.gain.linearRampToValueAtTime(0.11, t0 + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.11);
+    osc.connect(g);
+    g.connect(ac.destination);
+    osc.start(t0);
+    osc.stop(t0 + 0.12);
+  }
+
+  function playCastWhoosh() {
+    if (!save.sfxOn) return;
+    const ac = ensureAudio();
+    if (!ac) return;
+    const len = Math.floor(ac.sampleRate * 0.16);
+    const buf = ac.createBuffer(1, len, ac.sampleRate);
+    const ch = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) {
+      ch[i] = (Math.random() * 2 - 1) * Math.sin((i / len) * Math.PI);
+    }
+    const src = ac.createBufferSource();
+    src.buffer = buf;
+    const filter = ac.createBiquadFilter();
+    filter.type = 'bandpass';
+    filter.frequency.setValueAtTime(750, ac.currentTime);
+    filter.frequency.exponentialRampToValueAtTime(320, ac.currentTime + 0.15);
+    const g = ac.createGain();
+    g.gain.value = 0.12;
+    src.connect(filter);
+    filter.connect(g);
+    g.connect(ac.destination);
+    src.start();
+  }
+
+  function playBiteChime() {
+    playTone(659.25, 0.14, 'triangle', 0.11, 0);
+    playTone(987.77, 0.22, 'sine', 0.11, 0.07);
+  }
+
+  function playReelClick() {
+    playTone(220 + Math.random() * 60, 0.035, 'triangle', 0.035, 0);
+  }
+
+  function playCatchFanfare(isLev) {
+    const notes = isLev ? [392, 493.88, 587.33, 783.99, 987.77] : [392, 493.88, 587.33, 783.99];
+    notes.forEach(function (n, i) {
+      playTone(n, 0.24, 'triangle', 0.09, i * 0.075);
+    });
+  }
+
+  function playUiClick() {
+    playTone(523.25, 0.06, 'sine', 0.055, 0);
+  }
+
+  const MELODY_PATTERN = [0, 2, 4, 2, 3, 5, 4, -1, 2, 4, 3, 1, 2, 0, -1, 1];
+  function startMusicLoop() {
+    if (musicTimer) return;
+    musicTimer = setInterval(function () {
+      if (!save.musicOn || !audioCtx || audioCtx.state !== 'running') return;
+      const w = getWater();
+      const idx = MELODY_PATTERN[musicStep % MELODY_PATTERN.length];
+      if (idx >= 0) {
+        const freq = w.musicScale[idx % w.musicScale.length];
+        playTone(freq, 0.34, 'music', 0.042, 0);
+      }
+      if (musicStep % 4 === 0) {
+        const bass = w.musicBass[Math.floor(musicStep / 4) % w.musicBass.length];
+        playTone(bass, 0.55, 'music', 0.032, 0);
+      }
+      musicStep++;
+    }, 360);
+  }
+
+  // --- Game State ---
+  const state = {
+    time: 0,
+    phase: 'idle', // idle | charging | casting | waiting | bite | reeling | caught
+    modal: 'none', // none | tackle | journal | waters | demo_sign
+    zenMode: false,
+    zenHintTimer: 0,
+    journalPage: 0,
+    charge: 0,
+    chargeDir: 1,
+    castStartX: 64,
+    castStartY: 58,
+    bobberX: 64,
+    bobberY: 58,
+    bobberTargetX: 150,
+    bobberTargetY: 98,
+    castProgress: 0,
+    waitTimer: 0,
+    nibblesLeft: 1,
+    nibblePause: 0,
+    biteTimer: 0,
+    biteChimePlayed: false,
+    reelingFish: null,
+    reelingWeightOz: 0,
+    barPos: 0.55,
+    barVel: 0,
+    fishPos: 0.55,
+    fishTarget: 0.5,
+    fishMoveTimer: 0,
+    catchProgress: 0.28,
+    reelClickCooldown: 0,
+    lastCatch: null,
+    toastText: '',
+    toastTimer: 0,
+    holdingInput: false,
+    mouseX: -1,
+    mouseY: -1
+  };
+
+  // Ambient world particles
+  const clouds = [
+    { x: 18, y: 18, big: true, speed: 1.8 },
+    { x: 112, y: 27, big: false, speed: 2.5 },
+    { x: 194, y: 15, big: false, speed: 1.4 }
+  ];
+
+  const ambientLife = Array.from({ length: 14 }, function (_, i) {
+    return {
+      x: 40 + (i * 19) % 190,
+      y: 35 + (i * 23) % 72,
+      vx: (i % 2 === 0 ? 1 : -1) * (4 + (i % 5)),
+      phase: i * 1.1,
+      rainSpeed: 55 + (i % 4) * 14
+    };
+  });
+
+  const smokePuffs = Array.from({ length: 5 }, function (_, i) {
+    return { t: i * 0.2 };
+  });
+
+  const shadows = [
+    { x: 110, y: 95, dir: 1, speed: 8, len: 9 },
+    { x: 168, y: 108, dir: -1, speed: 6, len: 11 },
+    { x: 140, y: 86, dir: 1, speed: 5, len: 7 }
+  ];
+
+  const zenSwimmers = [];
+  const ripples = [];
+  const splashes = [];
+  const hitboxes = [];
+
+  function getWater() {
+    return DATA.WATERS.find((w) => w.id === save.waterId) || DATA.WATERS[0];
+  }
+
+  function getRod() {
+    return DATA.RODS.find((r) => r.id === save.equippedRod) || DATA.RODS[0];
+  }
+
+  function getWaterSpecies(waterId) {
+    return DATA.SPECIES.filter((f) => f.waterId === waterId);
+  }
+
+  function rebuildZenSwimmers() {
+    zenSwimmers.length = 0;
+    const pool = getWaterSpecies(save.waterId);
+    const caughtInWater = pool.filter((f) => !!save.journal[f.id]);
+    const list = caughtInWater.length > 0 ? caughtInWater : pool.slice(0, 3);
+    list.forEach(function (fish, idx) {
+      zenSwimmers.push({
+        fish: fish,
+        x: 78 + ((idx * 37) % 140),
+        y: 80 + ((idx * 11) % 42),
+        dir: idx % 2 === 0 ? 1 : -1,
+        speed: 6 + (idx % 4) * 2.5,
+        phase: idx * 0.9
+      });
+    });
+  }
+  rebuildZenSwimmers();
+
+  function addRipple(x, y, maxR) {
+    ripples.push({ x: x, y: y, r: 2, maxR: maxR || 14 });
+  }
+
+  function addSplash(x, y, count, color) {
+    for (let i = 0; i < (count || 8); i++) {
+      const ang = -Math.PI * (0.15 + Math.random() * 0.7);
+      const spd = 22 + Math.random() * 34;
+      splashes.push({
+        x: x,
+        y: y,
+        vx: Math.cos(ang) * spd,
+        vy: Math.sin(ang) * spd - 8,
+        life: 0.45 + Math.random() * 0.25,
+        color: color || (i % 2 === 0 ? P.creamWhite : P.cyanShimmer)
+      });
+    }
+  }
+
+  function showToast(msg, dur) {
+    state.toastText = msg;
+    state.toastTimer = dur || 1.5;
+  }
+
+  function chooseFishForCast() {
+    const rod = getRod();
+    const pool = getWaterSpecies(save.waterId);
+    const zoneFactor = (state.bobberTargetX - 88) / 130; // 0 shallow .. 1 deep
+    const weights = pool.map(function (f) {
+      if (f.rarity === 'common') return 42;
+      if (f.rarity === 'uncommon') return 22 + rod.rareBonus * 25 + zoneFactor * 12;
+      if (f.rarity === 'rare') return 7 + rod.rareBonus * 32 + zoneFactor * 18;
+      // Leviathan: only appears in Full Edition when deep or lucky
+      return 1.5 + rod.rareBonus * 14 + zoneFactor * 6;
+    });
+    const total = weights.reduce((a, b) => a + b, 0);
+    let r = Math.random() * total;
+    for (let i = 0; i < pool.length; i++) {
+      r -= weights[i];
+      if (r <= 0) return pool[i];
+    }
+    return pool[0];
+  }
+
+  function formatWeight(oz) {
+    if (oz >= 16) return (oz / 16).toFixed(1) + ' LB';
+    return Math.round(oz) + ' OZ';
+  }
+
+  function startCastRelease() {
+    const rod = getRod();
+    const reach = Math.min(1.0, state.charge * rod.castReach);
+    state.bobberTargetX = Math.round(92 + reach * 114);
+    state.bobberTargetY = Math.round(92 + (Math.random() * 18 - 4));
+    state.castStartX = 64;
+    state.castStartY = 58;
+    state.bobberX = 64;
+    state.bobberY = 58;
+    state.castProgress = 0;
+    state.phase = 'casting';
+    playCastWhoosh();
+  }
+
+  function triggerHook() {
+    const fish = chooseFishForCast();
+    state.reelingFish = fish;
+    state.reelingWeightOz = Math.round(fish.minOz + Math.random() * (fish.maxOz - fish.minOz));
+    state.barPos = 0.50;
+    state.barVel = 0;
+    state.fishPos = 0.55;
+    state.fishTarget = 0.45;
+    state.fishMoveTimer = 0.35;
+    state.catchProgress = 0.30;
+    state.phase = 'reeling';
+    addSplash(state.bobberX, state.bobberY, 10);
+    addRipple(state.bobberX, state.bobberY, 18);
+    playPlop(520);
+  }
+
+  function completeCatch() {
+    const fish = state.reelingFish;
+    const wOz = state.reelingWeightOz;
+    const prev = save.journal[fish.id];
+    const isNewSpecies = !prev;
+    const isNewRecord = !prev || wOz > prev.bestOz;
+
+    save.coins += fish.price;
+    save.totalCaught += 1;
+    save.journal[fish.id] = {
+      count: (prev ? prev.count : 0) + 1,
+      bestOz: prev ? Math.max(prev.bestOz, wOz) : wOz
+    };
+    persistSave();
+    rebuildZenSwimmers();
+
+    state.lastCatch = {
+      fish: fish,
+      weightOz: wOz,
+      isNewSpecies: isNewSpecies,
+      isNewRecord: isNewRecord
+    };
+    state.phase = 'caught';
+    addSplash(state.bobberX, state.bobberY, 16, P.creamGold);
+    playCatchFanfare(fish.isLeviathan);
+  }
+
+  function openDemoUpsell() {
+    state.modal = 'demo_sign';
+    if (demoBar) demoBar.style.display = 'block';
+  }
+
+  function closeModals() {
+    state.modal = 'none';
+    if (demoBar) demoBar.style.display = 'none';
+  }
+
+  // --- Update Loop ---
+  function update(dt) {
+    state.time += dt;
+    if (state.toastTimer > 0) state.toastTimer = Math.max(0, state.toastTimer - dt);
+    if (state.zenHintTimer > 0) state.zenHintTimer = Math.max(0, state.zenHintTimer - dt);
+
+    // Clouds
+    clouds.forEach(function (cl) {
+      cl.x += cl.speed * dt;
+      if (cl.x > W + 8) cl.x = -34;
+    });
+
+    // Chimney smoke
+    smokePuffs.forEach(function (p) {
+      p.t = (p.t + dt * 0.22) % 1;
+    });
+
+    // Ambient life
+    const water = getWater();
+    ambientLife.forEach(function (a) {
+      if (water.ambientType === 'rain') {
+        a.x -= a.rainSpeed * 0.32 * dt;
+        a.y += a.rainSpeed * dt;
+        if (a.y > 125) {
+          addRipple(a.x, 76 + Math.random() * 48, 5);
+          a.y = -4;
+          a.x = 20 + Math.random() * 235;
+        }
+      } else {
+        a.x += a.vx * dt;
+        a.y += Math.sin(state.time * 2.4 + a.phase) * 5 * dt;
+        if (a.x < 10) a.vx = Math.abs(a.vx);
+        if (a.x > W - 10) a.vx = -Math.abs(a.vx);
+        if (a.y < 24) a.y = 24;
+        if (a.y > 112) a.y = 112;
+      }
+    });
+
+    // Ambient ripples & splash drops
+    for (let i = ripples.length - 1; i >= 0; i--) {
+      ripples[i].r += 16 * dt;
+      if (ripples[i].r >= ripples[i].maxR) ripples.splice(i, 1);
+    }
+    for (let i = splashes.length - 1; i >= 0; i--) {
+      const s = splashes[i];
+      s.x += s.vx * dt;
+      s.y += s.vy * dt;
+      s.vy += 120 * dt;
+      s.life -= dt;
+      if (s.life <= 0) splashes.splice(i, 1);
+    }
+
+    // Shadows swimming
+    shadows.forEach(function (sh, idx) {
+      if (state.phase === 'waiting' && idx === 0) {
+        const dx = state.bobberX - 5 - sh.x;
+        const dy = state.bobberY + 2 - sh.y;
+        const dist = Math.hypot(dx, dy);
+        if (dist > 3) {
+          sh.dir = dx >= 0 ? 1 : -1;
+          sh.x += (dx / dist) * 16 * dt;
+          sh.y += (dy / dist) * 10 * dt;
+        }
+      } else {
+        sh.x += sh.dir * sh.speed * dt;
+        if (sh.x < 82) { sh.x = 82; sh.dir = 1; }
+        if (sh.x > 214) { sh.x = 214; sh.dir = -1; }
+      }
+    });
+
+    // Zen mode fish animation
+    if (state.zenMode) {
+      zenSwimmers.forEach(function (z) {
+        z.x += z.dir * z.speed * dt;
+        if (z.x < 72) { z.x = 72; z.dir = 1; }
+        if (z.x > 212) { z.x = 212; z.dir = -1; }
+      });
+      return;
+    }
+
+    if (state.modal !== 'none') return;
+
+    // Fishing Phase Logic
+    if (state.phase === 'charging') {
+      state.charge += state.chargeDir * 1.25 * dt;
+      if (state.charge >= 1) { state.charge = 1; state.chargeDir = -1; }
+      if (state.charge <= 0.1) { state.charge = 0.1; state.chargeDir = 1; }
+    } else if (state.phase === 'casting') {
+      state.castProgress += dt / 0.42;
+      if (state.castProgress >= 1) {
+        state.castProgress = 1;
+        state.bobberX = state.bobberTargetX;
+        state.bobberY = state.bobberTargetY;
+        state.phase = 'waiting';
+        state.waitTimer = 1.15 + Math.random() * 1.45;
+        state.nibblesLeft = Math.random() < 0.65 ? 2 : 1;
+        state.nibblePause = 0;
+        addRipple(state.bobberX, state.bobberY, 13);
+        addSplash(state.bobberX, state.bobberY, 5);
+        playPlop(330);
+      } else {
+        const u = state.castProgress;
+        state.bobberX = state.castStartX + (state.bobberTargetX - state.castStartX) * u;
+        state.bobberY = state.castStartY + (state.bobberTargetY - state.castStartY) * u - Math.sin(u * Math.PI) * 32;
+      }
+    } else if (state.phase === 'waiting') {
+      state.waitTimer -= dt;
+      if (state.waitTimer <= 0) {
+        if (state.nibblesLeft > 0) {
+          state.nibblesLeft -= 1;
+          addRipple(state.bobberX, state.bobberY, 10);
+          addSplash(state.bobberX, state.bobberY, 4);
+          playPlop(420);
+          state.nibblePause = 0.18;
+          state.waitTimer = 0.55 + Math.random() * 0.75;
+        } else {
+          const rod = getRod();
+          state.phase = 'bite';
+          state.biteTimer = rod.biteWindow;
+          addRipple(state.bobberX, state.bobberY, 16);
+          addSplash(state.bobberX, state.bobberY, 8);
+          playBiteChime();
+        }
+      }
+      if (state.nibblePause > 0) state.nibblePause = Math.max(0, state.nibblePause - dt);
+    } else if (state.phase === 'bite') {
+      state.biteTimer -= dt;
+      if (state.biteTimer <= 0) {
+        state.phase = 'idle';
+        addRipple(state.bobberX, state.bobberY, 10);
+        showToast('NIBBLED AWAY!', 1.2);
+      }
+    } else if (state.phase === 'reeling') {
+      const rod = getRod();
+      const fish = state.reelingFish;
+      const trackInnerH = 86;
+      const barPxH = Math.min(72, rod.barHeight);
+      const barNormH = barPxH / trackInnerH;
+
+      // Catch bar physics (0 = top, 1 - barNormH = bottom)
+      const accel = state.holdingInput ? -3.1 : 2.95;
+      state.barVel += accel * dt;
+      state.barVel *= Math.pow(0.18, dt); // smooth cozy damping
+      state.barPos += state.barVel * dt;
+      if (state.barPos < 0) {
+        state.barPos = 0;
+        state.barVel = Math.max(0, -state.barVel * 0.25);
+      }
+      if (state.barPos > 1 - barNormH) {
+        state.barPos = 1 - barNormH;
+        state.barVel = Math.min(0, -state.barVel * 0.25);
+      }
+
+      // Fish darting AI
+      state.fishMoveTimer -= dt;
+      if (state.fishMoveTimer <= 0) {
+        const ag = fish.agility * rod.calmFactor;
+        state.fishTarget = 0.06 + Math.random() * 0.86;
+        state.fishMoveTimer = Math.max(0.32, (1.15 - ag * 0.36) + Math.random() * 0.5);
+      }
+      const fishSpeed = (0.48 + fish.agility * rod.calmFactor * 0.55);
+      const diff = state.fishTarget - state.fishPos;
+      if (Math.abs(diff) > 0.01) {
+        state.fishPos += Math.sign(diff) * Math.min(Math.abs(diff), fishSpeed * dt);
+      }
+
+      // Exact pixel-aligned overlap between green catch bar and fish icon
+      const barTopPx = state.barPos * trackInnerH;
+      const fishCenterPx = state.fishPos * (trackInnerH - 8) + 4;
+      const inside = fishCenterPx >= barTopPx - 2 && fishCenterPx <= barTopPx + barPxH + 2;
+      if (inside) {
+        state.catchProgress += 0.36 * dt;
+        state.reelClickCooldown -= dt;
+        if (state.reelClickCooldown <= 0) {
+          playReelClick();
+          state.reelClickCooldown = 0.13;
+        }
+        if (Math.random() < 0.25) addSplash(state.bobberX, state.bobberY, 1);
+      } else {
+        const drainRate = fish.rarity === 'common' ? 0.13 : 0.17;
+        state.catchProgress -= drainRate * dt;
+      }
+
+      if (state.catchProgress >= 1) {
+        completeCatch();
+      } else if (state.catchProgress <= 0) {
+        state.phase = 'idle';
+        addRipple(state.bobberX, state.bobberY, 14);
+        showToast('GOT AWAY!', 1.3);
+      }
+    }
+  }
+
+  // --- Render Scene ---
+  function drawCattail(x, topY, botY, sway) {
+    for (let y = topY; y <= botY; y++) {
+      const u = 1 - (y - topY) / Math.max(1, botY - topY);
+      const sx = Math.round(x + sway * u * u);
+      pxRect(sx, y, 1, 1, y % 3 === 0 ? P.pineDeep : P.grassSage);
+    }
+    const hx = Math.round(x + sway);
+    pxRect(hx - 1, topY + 2, 3, 5, P.cedarDark);
+    pxRect(hx, topY + 3, 1, 3, P.cedarMid);
+    pxRect(hx, topY + 1, 1, 1, P.ink);
+  }
+
+  function drawReed(x, topY, botY, sway, bright) {
+    for (let y = topY; y <= botY; y++) {
+      const u = 1 - (y - topY) / Math.max(1, botY - topY);
+      const sx = Math.round(x + sway * u * u);
+      pxRect(sx, y, 1, 1, bright && y < topY + 5 ? P.limeSage : y % 2 === 0 ? P.grassSage : P.pineDeep);
+    }
+  }
+
+  function drawLantern(postX, deckY) {
+    pxRect(postX, deckY - 22, 3, 22, P.ink);
+    pxRect(postX + 1, deckY - 21, 1, 20, P.cedarMid);
+    pxRect(postX + 1, deckY - 22, 7, 2, P.ink);
+    pxRect(postX + 2, deckY - 21, 5, 1, P.sandWood);
+    const lx = postX + 7;
+    const ly = deckY - 17;
+    const flicker = Math.sin(state.time * 5.2) > 0 ? 1 : 0;
+    pxRect(lx - 1, ly - 3, 5, 1, P.ink);
+    pxRect(lx - 2, ly - 2, 7, 7, P.ink);
+    pxRect(lx - 1, ly - 1, 5, 5, P.marigold);
+    pxRect(lx, ly, 3, 3, flicker ? P.creamWhite : P.creamGold);
+    pxRect(lx - 1, ly + 4, 5, 1, P.cedarDark);
+    // Reflection on water
+    pxRect(lx - 1, deckY + 12, 4 + flicker, 1, P.marigold);
+    pxRect(lx, deckY + 17, 3, 1, P.creamGold);
+  }
+
+  function renderWorld() {
+    const water = getWater();
+
+    // Sky bands
+    pxRect(0, 0, W, 24, water.skyTop);
+    drawDitherRect(0, 24, W, 10, water.skyTop, water.skyMid);
+    pxRect(0, 34, W, 14, water.skyMid);
+    drawDitherRect(0, 48, W, 10, water.skyMid, water.skyBot);
+    pxRect(0, 58, W, 14, water.skyBot);
+
+    // Stars at night
+    if (water.isNight) {
+      const stars = [[18, 9], [46, 16], [78, 7], [116, 14], [148, 8], [198, 12], [224, 19], [92, 24], [164, 26]];
+      stars.forEach(function (st, idx) {
+        const tw = Math.sin(state.time * 2.5 + idx * 1.7) > 0.2;
+        pxRect(st[0], st[1], 1, 1, tw ? P.creamWhite : P.cyanShimmer);
+      });
+    }
+
+    // Sun or Moon orb
+    const orbX = 172;
+    const orbY = water.isNight ? 24 : 52;
+    if (water.isNight) {
+      pxRect(orbX - 5, orbY - 5, 10, 10, water.sunColor);
+      pxRect(orbX - 3, orbY - 4, 6, 8, water.skyMid);
+    } else {
+      ctx.fillStyle = water.sunHalo;
+      ctx.fillRect(orbX - 10, orbY - 10, 20, 20);
+      ctx.fillStyle = water.sunColor;
+      ctx.fillRect(orbX - 6, orbY - 6, 12, 12);
+    }
+
+    // Clouds
+    const clMap = water.id === 'sunny_creek' ? DATA.SPRITES.CLOUD_DAY : DATA.SPRITES.CLOUD_GOLD;
+    if (!water.isNight) {
+      clouds.forEach(function (cl) {
+        drawSprite(cl.big ? 'cl_l' : 'cl_s', cl.big ? DATA.SPRITES.CLOUD_L : DATA.SPRITES.CLOUD_S, clMap, cl.x, cl.y, 1);
+      });
+    }
+
+    // Hills
+    for (let x = 0; x < W; x++) {
+      const ry = 56 + Math.round(Math.sin(x * 0.04) * 3 + Math.cos(x * 0.08) * 2);
+      pxRect(x, ry, 1, 70 - ry, water.hillFar);
+      const ny = 62 + Math.round(Math.sin(x * 0.07 + 1) * 2);
+      pxRect(x, ny, 1, 70 - ny, water.hillNear);
+    }
+
+    // Far bank trees & cottage
+    drawSprite('pine', DATA.SPRITES.PINE, DATA.SPRITES.TREE_MAP, 12, 47, 1);
+    drawSprite('pine', DATA.SPRITES.PINE, DATA.SPRITES.TREE_MAP, 26, 49, 1);
+    drawSprite('willow', DATA.SPRITES.WILLOW, DATA.SPRITES.TREE_MAP, 54, 52, 1);
+    if (water.hasCottage) {
+      drawSprite('cottage', DATA.SPRITES.COTTAGE, DATA.SPRITES.COTTAGE_MAP, 126, 51, 1);
+      smokePuffs.forEach(function (p) {
+        const sx = Math.round(140 + Math.sin(p.t * 6) * 3 + p.t * 6);
+        const sy = Math.round(49 - p.t * 20);
+        const sz = p.t < 0.6 ? 2 : 1;
+        pxRect(sx, sy, sz, sz, p.t < 0.7 ? P.creamWhite : P.mist);
+      });
+    }
+    drawSprite('pine', DATA.SPRITES.PINE, DATA.SPRITES.TREE_MAP, 188, 46, 1);
+    drawSprite('willow', DATA.SPRITES.WILLOW, DATA.SPRITES.TREE_MAP, 204, 49, 1);
+    drawSprite('pine', DATA.SPRITES.PINE, DATA.SPRITES.TREE_MAP, 224, 47, 1);
+
+    // Grass bank
+    pxRect(0, 67, W, 3, water.bankTop);
+    pxRect(0, 67, W, 1, water.bankHighlight);
+    pxRect(0, 70, W, 1, P.ink);
+
+    // Water
+    pxRect(0, 71, W, 28, water.waterTop);
+    drawDitherRect(0, 99, W, 12, water.waterTop, water.waterDeep);
+    pxRect(0, 111, W, 24, water.waterDeep);
+
+    // Shimmering animated water glints
+    for (let i = 0; i < 14; i++) {
+      const sx = 76 + ((i * 29 + Math.floor(state.time * (4 + (i % 3)))) % 158);
+      const sy = 76 + (i * 7) % 48;
+      const sw = 4 + ((Math.floor(state.time * 2 + i) % 3) * 3);
+      pxRect(sx, sy, sw, 1, i % 2 === 0 ? water.shimmerA : water.shimmerB);
+    }
+
+    // Underwater fish shadows (or full color zen swimmers!)
+    if (state.zenMode) {
+      zenSwimmers.forEach(function (z) {
+        const bob = Math.round(Math.sin(state.time * 2.5 + z.phase));
+        drawSprite('f_' + z.fish.id, DATA.SPRITES.FISH[z.fish.shape], z.fish.colors, z.x, z.y + bob, 1, z.dir < 0);
+      });
+    } else {
+      shadows.forEach(function (sh) {
+        pxRect(sh.x, sh.y, sh.len, 2, water.waterDeep === P.ink ? P.indigoDusk : P.ink);
+        pxRect(sh.x + (sh.dir > 0 ? -2 : sh.len), sh.y, 2, 1, P.ink);
+      });
+    }
+
+    // Cedar Pier
+    [12, 34, 54].forEach(function (px) {
+      pxRect(px, 91, 5, 29, P.ink);
+      pxRect(px + 1, 91, 3, 28, P.cedarDark);
+      pxRect(px - 2, 119, 9, 1, water.shimmerA);
+    });
+    pxRect(0, 84, 66, 7, P.ink);
+    pxRect(0, 85, 65, 2, P.sandWood);
+    pxRect(0, 87, 65, 2, P.rose);
+    pxRect(0, 89, 65, 1, P.cedarDark);
+    for (let px = 6; px < 62; px += 8) {
+      pxRect(px, 85, 1, 4, P.cedarDark);
+    }
+
+    // Lantern on pier
+    drawLantern(54, 85);
+
+    // Cozy Fisher on pier
+    let pose = 'idle';
+    let bobOffset = 0;
+    if (state.phase === 'charging') pose = 'windup';
+    else if (state.phase === 'bite' || state.phase === 'reeling') pose = 'reel';
+    else bobOffset = Math.sin(state.time * 2.2) > 0.6 ? -1 : 0;
+
+    drawSprite('fisher_' + pose, DATA.SPRITES.FISHER[pose], DATA.SPRITES.FISHER_MAP, 20, 65 + bobOffset, 1, false);
+
+    // Rod & Fishing line
+    if (!state.zenMode) {
+      const handX = pose === 'windup' ? 23 : 33;
+      const handY = pose === 'windup' ? 74 : 76 + bobOffset;
+      const tipX = pose === 'windup' ? 8 : 64;
+      const tipY = pose === 'windup' ? 54 : (state.phase === 'reeling' || state.phase === 'bite' ? 63 : 58);
+      drawPixelLine(handX, handY, tipX, tipY, P.ink);
+      drawPixelLine(handX, handY - 1, tipX, tipY - 1, P.sandWood);
+
+      if (state.phase === 'casting' || state.phase === 'waiting' || state.phase === 'bite' || state.phase === 'reeling') {
+        const bBob = state.phase === 'waiting' ? Math.sin(state.time * 3.5) * 1.1 + (state.nibblePause > 0 ? 2 : 0) : 0;
+        const bx = Math.round(state.bobberX);
+        const by = Math.round(state.bobberY + bBob + (state.phase === 'bite' ? 2 : 0));
+        const sag = state.phase === 'reeling' || state.phase === 'bite' ? 0 : 6;
+        for (let i = 0; i <= 26; i++) {
+          const u = i / 26;
+          const lx = Math.round(tipX + (bx - tipX) * u);
+          const ly = Math.round(tipY + (by - tipY) * u + Math.sin(u * Math.PI) * sag);
+          pxRect(lx, ly, 1, 1, P.creamWhite);
+        }
+        drawSprite('bobber', DATA.SPRITES.BOBBER, DATA.SPRITES.BOBBER_MAP, bx - 2, by - 2, 1);
+      }
+    }
+
+    // Ripples & splashes
+    ripples.forEach(function (rp) {
+      const rx = Math.round(rp.x - rp.r);
+      const rw = Math.round(rp.r * 2);
+      pxRect(rx, Math.round(rp.y + 3), rw, 1, water.shimmerB);
+    });
+    splashes.forEach(function (sp) {
+      pxRect(sp.x, sp.y, 2, 2, sp.color);
+    });
+
+    // Ambient butterflies / fireflies / rain
+    ambientLife.forEach(function (a) {
+      if (water.ambientType === 'rain') {
+        drawPixelLine(a.x, a.y, a.x - 2, a.y + 4, P.mist);
+      } else if (water.ambientType === 'butterflies') {
+        const wing = Math.sin(state.time * 12 + a.phase) > 0;
+        pxRect(a.x, a.y, 1, 1, P.marigold);
+        if (wing) pxRect(a.x + 1, a.y - 1, 1, 1, P.creamGold);
+      } else {
+        const glow = Math.sin(state.time * 4 + a.phase) > -0.1;
+        if (glow) {
+          pxRect(a.x, a.y, 2, 2, water.isNight ? P.cyanShimmer : P.marigold);
+          pxRect(a.x, a.y, 1, 1, P.creamWhite);
+        }
+      }
+    });
+
+    // Foreground reeds & cattails
+    const swayA = Math.sin(state.time * 1.4) * 1.4;
+    const swayB = Math.sin(state.time * 1.4 + 1.2) * 1.4;
+    drawCattail(5, 92, 134, swayA);
+    drawReed(9, 102, 134, swayB, true);
+    drawReed(13, 108, 134, swayA, false);
+    drawCattail(229, 90, 134, -swayB);
+    drawReed(224, 98, 134, -swayA, true);
+    drawReed(234, 102, 134, -swayB, true);
+  }
+
+  function drawShadowText(x, y, text, fg, shadow) {
+    const str = String(text || '').toUpperCase();
+    if (shadow) plotTextRaw(x + 1, y + 1, str, shadow, 1);
+    plotTextRaw(x, y, str, fg, 1);
+  }
+
+  function addBtn(x, y, w, h, label, fill, action, registerHitbox) {
+    drawWoodPanel(x, y, w, h, fill || P.cedarMid, P.ink, P.sandWood);
+    const tw = measureText(label, 1);
+    drawShadowText(x + Math.floor((w - tw) / 2), y + Math.floor((h - 7) / 2), label, P.creamWhite, P.ink);
+    if (registerHitbox !== false) {
+      hitboxes.push({ x: x, y: y, w: w, h: h, action: action });
+    }
+  }
+
+  function renderHudAndGameplay() {
+    hitboxes.length = 0;
+
+    if (state.zenMode) {
+      if (state.zenHintTimer > 0) {
+        drawWoodPanel(42, 117, 156, 13, P.cedarDark, P.ink, P.sandWood);
+        drawCenteredText(120, 'ZEN AQUARIUM - CLICK TO FISH', P.creamGold, P.ink, 1);
+      }
+      return;
+    }
+
+    const water = getWater();
+    const hudInteractive = state.modal === 'none' && state.phase !== 'caught';
+
+    // Top-left water + coin plate
+    drawWoodPanel(4, 4, 96, 14, P.cedarDark, P.ink, P.sandWood);
+    drawShadowText(8, 8, water.shortName, P.creamWhite, P.ink);
+    drawSprite('ico_coin', DATA.SPRITES.ICONS.coin, { o: P.ink, Y: P.marigold, H: P.creamGold, w: P.creamWhite }, 44, 8, 1);
+    drawShadowText(53, 8, save.coins + 'G', P.creamGold, P.ink);
+
+    // Top-right action buttons (padded cleanly with crisp shadow text)
+    addBtn(102, 4, 40, 14, 'TACKLE', P.cedarMid, function () { state.modal = 'tackle'; }, hudInteractive);
+    addBtn(143, 4, 46, 14, 'JOURNAL', P.cedarMid, function () { state.modal = 'journal'; state.journalPage = 0; }, hudInteractive);
+    addBtn(190, 4, 34, 14, 'WATER', P.cedarMid, function () { state.modal = 'waters'; }, hudInteractive);
+
+    // Music & SFX mini buttons at far right / second row
+    addBtn(225, 4, 12, 14, save.musicOn ? 'M' : '-', save.musicOn ? P.grassSage : P.slate, function () {
+      save.musicOn = !save.musicOn;
+      persistSave();
+    }, hudInteractive);
+    addBtn(225, 19, 12, 12, save.sfxOn ? 'S' : '-', save.sfxOn ? P.creekTeal : P.slate, function () {
+      save.sfxOn = !save.sfxOn;
+      persistSave();
+    }, hudInteractive);
+
+    if (FULL_EDITION) {
+      addBtn(198, 19, 26, 12, 'ZEN', P.indigoDusk, function () {
+        state.zenMode = true;
+        state.zenHintTimer = 3.0;
+        rebuildZenSwimmers();
+      }, hudInteractive);
+    } else {
+      addBtn(194, 19, 30, 12, 'FULL', P.rose, function () {
+        openDemoUpsell();
+      }, hudInteractive);
+    }
+
+    // Cast Meter while charging
+    if (state.phase === 'charging') {
+      drawWoodPanel(6, 44, 52, 13, P.cedarDark, P.ink, P.sandWood);
+      pxRect(9, 47, 46, 7, P.ink);
+      pxRect(10, 48, 44, 5, P.darkSlate);
+      const fillW = Math.round(44 * state.charge);
+      const col = state.charge > 0.72 ? P.marigold : (state.charge > 0.38 ? P.grassSage : P.cyanShimmer);
+      pxRect(10, 48, fillW, 5, col);
+      drawText(8, 35, 'POWER', P.creamGold, P.ink, 1);
+    }
+
+    // Exclamation "!" badge on bite
+    if (state.phase === 'bite') {
+      const bounce = Math.round(Math.sin(state.time * 24) * 2);
+      drawWoodPanel(state.bobberX - 7, state.bobberY - 26 + bounce, 15, 16, P.creamGold, P.ink, P.creamWhite);
+      drawText(state.bobberX - 2, state.bobberY - 21 + bounce, '!', P.rose, P.ink, 1);
+    }
+
+    // Wood-framed Catch Tension Column on right during reeling
+    if (state.phase === 'reeling' && state.reelingFish) {
+      const colX = 200;
+      const colY = 32;
+      const colW = 34;
+      const colH = 98;
+      drawWoodPanel(colX, colY, colW, colH, P.cedarDark, P.ink, P.sandWood);
+
+      const trackX = colX + 4;
+      const trackY = colY + 5;
+      const trackW = 18;
+      const trackH = colH - 10; // 88 (inner = 86)
+      pxRect(trackX, trackY, trackW, trackH, P.ink);
+      pxRect(trackX + 1, trackY + 1, trackW - 2, trackH - 2, P.pineDeep);
+
+      const rod = getRod();
+      const barH = Math.min(72, rod.barHeight);
+      const barY = trackY + 1 + Math.round(state.barPos * (trackH - 2));
+      pxRect(trackX + 1, barY, trackW - 2, barH, P.ink);
+      pxRect(trackX + 2, barY + 1, trackW - 4, barH - 2, P.grassSage);
+      pxRect(trackX + 3, barY + 2, 2, barH - 4, P.limeSage);
+
+      const fishMat = DATA.SPRITES.FISH[state.reelingFish.shape];
+      const fishW = fishMat[0].length;
+      const fishY = trackY + 1 + Math.round(state.fishPos * (trackH - 10));
+      drawSprite('f_' + state.reelingFish.id, fishMat, state.reelingFish.colors, trackX + Math.floor((trackW - fishW) / 2), fishY, 1);
+
+      // Progress gauge
+      const progX = colX + 25;
+      const progH = trackH;
+      pxRect(progX, trackY, 5, progH, P.ink);
+      pxRect(progX + 1, trackY + 1, 3, progH - 2, P.darkSlate);
+      const fillH = Math.round((progH - 2) * Math.max(0, Math.min(1, state.catchProgress)));
+      pxRect(progX + 1, trackY + progH - 1 - fillH, 3, fillH, P.marigold);
+      if (fillH > 4) pxRect(progX + 1, trackY + progH - 1 - fillH, 3, 4, P.limeSage);
+    }
+
+    // Bottom prompt bar
+    if (state.modal === 'none' && state.phase !== 'caught') {
+      let prompt = '';
+      if (state.phase === 'idle') prompt = 'HOLD SPACE / CLICK TO CAST';
+      else if (state.phase === 'charging') prompt = 'RELEASE TO CAST!';
+      else if (state.phase === 'waiting') prompt = 'WATCH FOR A NIBBLE...';
+      else if (state.phase === 'bite') prompt = 'CLICK OR PRESS SPACE NOW!';
+      else if (state.phase === 'reeling') prompt = 'HOLD SPACE / CLICK TO REEL!';
+      if (prompt) {
+        const pw = measureText(prompt, 1) + 14;
+        drawWoodPanel(4, 118, Math.min(194, pw), 13, P.cedarDark, P.ink, P.sandWood);
+        drawShadowText(10, 121, prompt, state.phase === 'bite' ? P.limeSage : P.creamGold, P.ink);
+      }
+    }
+
+    // Toast notification
+    if (state.toastTimer > 0 && state.toastText) {
+      const tw = measureText(state.toastText, 1) + 14;
+      const tx = Math.round((W - tw) / 2);
+      drawWoodPanel(tx, 24, tw, 14, P.plum, P.ink, P.creamGold);
+      drawText(tx + 7, 28, state.toastText, P.creamWhite, P.ink, 1);
+    }
+  }
+
+  function renderCaughtPopup() {
+    if (state.phase !== 'caught' || !state.lastCatch) return;
+    pxRect(0, 0, W, H, 'rgba(26, 28, 44, 0.48)');
+    const c = state.lastCatch;
+    const f = c.fish;
+    drawParchmentPanel(36, 18, 168, 99);
+
+    const header = c.isNewSpecies ? 'NEW SPECIES CAUGHT!' : (c.isNewRecord ? 'NEW RECORD CATCH!' : 'NICE CATCH!');
+    drawCenteredText(26, header, f.isLeviathan ? P.rose : P.grassSage, P.ink, 1);
+
+    // Vignette box with 2x sprite
+    pxRect(92, 38, 56, 30, P.ink);
+    pxRect(93, 39, 54, 28, P.creekTeal);
+    const spW = DATA.SPRITES.FISH[f.shape][0].length * 2;
+    drawSprite('f_' + f.id, DATA.SPRITES.FISH[f.shape], f.colors, 120 - Math.floor(spW / 2), 45, 2);
+
+    drawCenteredText(72, f.name, P.ink, null, 1);
+    drawCenteredText(82, formatWeight(c.weightOz) + '   +' + f.price + 'G', P.rose, null, 1);
+    if (f.note) {
+      drawCenteredText(92, f.note, P.cedarDark, null, 1);
+    }
+
+    addBtn(84, 102, 72, 12, 'STOW & CAST', P.grassSage, function () {
+      state.phase = 'idle';
+      state.lastCatch = null;
+    });
+  }
+
+  function renderModals() {
+    if (state.modal === 'none') return;
+    pxRect(0, 0, W, H, 'rgba(26, 28, 44, 0.52)');
+
+    if (state.modal === 'tackle') {
+      drawParchmentPanel(14, 10, 212, 115);
+      drawText(23, 18, 'WHARF TACKLE BENCH', P.cedarDark, null, 1);
+      drawText(166, 18, save.coins + 'G', P.rose, null, 1);
+      pxRect(23, 27, 194, 1, P.sandWood);
+
+      DATA.RODS.forEach(function (rod, i) {
+        const ry = 31 + i * 16;
+        const owned = save.ownedRods.indexOf(rod.id) >= 0;
+        const equipped = save.equippedRod === rod.id;
+        const lockedDemo = !FULL_EDITION && !rod.demoUnlocked;
+
+        pxRect(22, ry, 196, 14, equipped ? P.creamGold : P.sandWood);
+        pxRect(23, ry + 1, 194, 12, P.creamWhite);
+        drawSprite('rod_' + rod.id, DATA.SPRITES.RODS[rod.icon], DATA.SPRITES.ROD_MAP, 25, ry + 2, 1);
+        drawText(38, ry + 4, rod.name, P.ink, null, 1);
+
+        if (lockedDemo) {
+          addBtn(162, ry + 1, 54, 12, 'FULL ED.', P.rose, function () {
+            openDemoUpsell();
+          });
+        } else if (equipped) {
+          pxRect(162, ry + 2, 54, 10, P.grassSage);
+          drawShadowText(166, ry + 4, 'EQUIPPED', P.creamWhite, P.ink);
+        } else if (owned) {
+          addBtn(168, ry + 1, 46, 12, 'EQUIP', P.creekTeal, function () {
+            save.equippedRod = rod.id;
+            persistSave();
+          });
+        } else {
+          const canBuy = save.coins >= rod.price;
+          addBtn(162, ry + 1, 54, 12, 'BUY ' + rod.price + 'G', canBuy ? P.marigold : P.slate, function () {
+            if (save.coins >= rod.price) {
+              save.coins -= rod.price;
+              save.ownedRods.push(rod.id);
+              save.equippedRod = rod.id;
+              persistSave();
+              playCatchFanfare(false);
+            } else {
+              showToast('NEED ' + rod.price + 'G!', 1.2);
+            }
+          });
+        }
+      });
+
+      addBtn(182, 111, 38, 11, 'CLOSE', P.rose, closeModals);
+    } else if (state.modal === 'journal') {
+      drawParchmentPanel(12, 8, 216, 119);
+      pxRect(119, 14, 2, 107, P.sandWood);
+
+      const caughtCount = DATA.SPECIES.filter((f) => !!save.journal[f.id]).length;
+      drawText(21, 16, 'FISH JOURNAL', P.cedarDark, null, 1);
+      drawText(144, 16, caughtCount + '/' + DATA.SPECIES.length + ' CAUGHT', P.rose, null, 1);
+      pxRect(21, 25, 198, 1, P.sandWood);
+
+      const perPage = 6;
+      const totalPages = Math.max(1, Math.ceil(DATA.SPECIES.length / perPage));
+      const slice = DATA.SPECIES.slice(state.journalPage * perPage, (state.journalPage + 1) * perPage);
+
+      slice.forEach(function (fish, idx) {
+        const col = idx < 3 ? 0 : 1;
+        const row = idx % 3;
+        const cx = 20 + col * 102;
+        const cy = 29 + row * 26;
+        const rec = save.journal[fish.id];
+
+        pxRect(cx, cy, 94, 23, P.sandWood);
+        pxRect(cx + 1, cy + 1, 92, 21, P.creamGold);
+        pxRect(cx + 3, cy + 3, 20, 17, P.cedarDark);
+        pxRect(cx + 4, cy + 4, 18, 15, P.creekTeal);
+        const fx = cx + (DATA.SPRITES.FISH[fish.shape][0].length > 15 ? 4 : 6);
+
+        if (rec) {
+          drawSprite('f_' + fish.id, DATA.SPRITES.FISH[fish.shape], fish.colors, fx, cy + 8, 1);
+          drawText(cx + 26, cy + 4, fish.name, P.ink, null, 1);
+          drawText(cx + 26, cy + 13, fish.price + 'G', P.rose, null, 1);
+          drawText(cx + 52, cy + 13, formatWeight(rec.bestOz), P.cedarDark, null, 1);
+          if (fish.isLeviathan) {
+            drawSprite('ico_star', DATA.SPRITES.ICONS.star, { o: P.ink, Y: P.marigold }, cx + 85, cy + 3, 1);
+          }
+        } else {
+          drawSilhouette('f_' + fish.id, DATA.SPRITES.FISH[fish.shape], P.pineDeep, fx, cy + 8, 1);
+          drawText(cx + 26, cy + 4, '? ? ?', P.cedarMid, null, 1);
+          drawText(cx + 26, cy + 13, fish.price + 'G', P.cedarMid, null, 1);
+        }
+      });
+
+      if (state.journalPage > 0) {
+        addBtn(20, 110, 42, 12, '< PREV', P.cedarMid, function () { state.journalPage--; });
+      }
+      drawText(76, 113, 'PG ' + (state.journalPage + 1) + '/' + totalPages, P.cedarDark, null, 1);
+      if (state.journalPage < totalPages - 1) {
+        addBtn(122, 110, 42, 12, 'NEXT >', P.cedarMid, function () { state.journalPage++; });
+      }
+      addBtn(178, 110, 42, 12, 'CLOSE', P.rose, closeModals);
+    } else if (state.modal === 'waters') {
+      drawParchmentPanel(18, 12, 204, 111);
+      drawText(27, 20, 'CHOOSE FISHING SPOT', P.cedarDark, null, 1);
+      pxRect(27, 29, 186, 1, P.sandWood);
+
+      DATA.WATERS.forEach(function (w, i) {
+        const ry = 34 + i * 19;
+        const lockedDemo = !FULL_EDITION && !w.demoUnlocked;
+        const active = save.waterId === w.id;
+        pxRect(26, ry, 188, 16, active ? P.creamGold : P.sandWood);
+        pxRect(27, ry + 1, 186, 14, P.creamWhite);
+        // Color preview swatch
+        pxRect(30, ry + 3, 10, 5, w.skyMid);
+        pxRect(30, ry + 8, 10, 5, w.waterTop);
+
+        drawText(44, ry + 5, w.name, P.ink, null, 1);
+        if (lockedDemo) {
+          addBtn(156, ry + 2, 54, 12, 'FULL ED.', P.rose, function () {
+            openDemoUpsell();
+          });
+        } else if (active) {
+          pxRect(156, ry + 3, 54, 10, P.grassSage);
+          drawShadowText(171, ry + 5, 'HERE', P.creamWhite, P.ink);
+        } else {
+          addBtn(158, ry + 2, 52, 12, 'TRAVEL', P.creekTeal, function () {
+            save.waterId = w.id;
+            state.phase = 'idle';
+            persistSave();
+            rebuildZenSwimmers();
+            closeModals();
+          });
+        }
+      });
+
+      addBtn(176, 109, 38, 11, 'CLOSE', P.rose, closeModals);
+    } else if (state.modal === 'demo_sign') {
+      drawWoodPanel(20, 16, 200, 103, P.cedarDark, P.ink, P.sandWood);
+      drawCenteredText(24, 'SUNLIT CREEK - FULL EDITION', P.creamGold, P.ink, 1);
+      pxRect(32, 34, 176, 1, P.sandWood);
+      drawCenteredText(41, 'ALL 4 SCENIC WATERS', P.creamWhite, P.ink, 1);
+      drawCenteredText(51, '28 FISH + 4 LEVIATHANS', P.creamWhite, P.ink, 1);
+      drawCenteredText(61, '5 RODS + ZEN AQUARIUM MODE', P.creamWhite, P.ink, 1);
+      drawCenteredText(74, 'FULL EDITION £2.99 ON ITCH.IO', P.limeSage, P.ink, 1);
+
+      addBtn(30, 92, 116, 16, 'OPEN ITCH.IO PAGE', P.grassSage, function () {
+        window.open(DATA.ITCH_URL, '_blank', 'noopener,noreferrer');
+      });
+      addBtn(152, 92, 56, 16, 'BACK', P.cedarMid, closeModals);
+    }
+  }
+
+  function render() {
+    renderWorld();
+    renderHudAndGameplay();
+    renderCaughtPopup();
+    renderModals();
+  }
+
+  // --- Input Handling ---
+  function getCanvasCoords(ev) {
+    const rect = canvas.getBoundingClientRect();
+    const clientX = ev.touches ? ev.touches[0].clientX : ev.clientX;
+    const clientY = ev.touches ? ev.touches[0].clientY : ev.clientY;
+    return {
+      x: ((clientX - rect.left) / rect.width) * W,
+      y: ((clientY - rect.top) / rect.height) * H
+    };
+  }
+
+  function handlePrimaryDown(px, py) {
+    ensureAudio();
+    startMusicLoop();
+
+    if (state.zenMode) {
+      state.zenMode = false;
+      playUiClick();
+      return;
+    }
+
+    // Check UI button hitboxes first (reverse order = top-most wins)
+    if (typeof px === 'number') {
+      for (let i = hitboxes.length - 1; i >= 0; i--) {
+        const b = hitboxes[i];
+        if (px >= b.x && px <= b.x + b.w && py >= b.y && py <= b.y + b.h) {
+          playUiClick();
+          b.action();
+          return;
+        }
+      }
+    }
+
+    if (state.modal !== 'none') return;
+
+    if (state.phase === 'caught') {
+      playUiClick();
+      state.phase = 'idle';
+      state.lastCatch = null;
+      return;
+    }
+
+    state.holdingInput = true;
+    if (state.phase === 'idle') {
+      state.phase = 'charging';
+      state.charge = 0.15;
+      state.chargeDir = 1;
+    } else if (state.phase === 'waiting') {
+      state.phase = 'idle';
+      showToast('REELED IN', 0.9);
+    } else if (state.phase === 'bite') {
+      triggerHook();
+    }
+  }
+
+  function handlePrimaryUp() {
+    if (!state.holdingInput) return;
+    state.holdingInput = false;
+    if (state.phase === 'charging') {
+      startCastRelease();
+    }
+  }
+
+  canvas.addEventListener('pointerdown', function (ev) {
+    ev.preventDefault();
+    const pt = getCanvasCoords(ev);
+    handlePrimaryDown(pt.x, pt.y);
+  });
+  window.addEventListener('pointerup', handlePrimaryUp);
+  canvas.addEventListener('pointermove', function () {
+    if (state.zenMode) state.zenHintTimer = 2.5;
+  });
+
+  window.addEventListener('keydown', function (ev) {
+    if (ev.repeat) return;
+    const k = ev.key.toLowerCase();
+    if (k === ' ' || k === 'enter') {
+      ev.preventDefault();
+      if (state.phase === 'caught') {
+        playUiClick();
+        state.phase = 'idle';
+        state.lastCatch = null;
+      } else if (state.modal === 'none') {
+        handlePrimaryDown();
+      }
+    } else if (k === 'escape') {
+      if (state.zenMode) state.zenMode = false;
+      else closeModals();
+    } else if (k === 'j' && state.phase === 'idle') {
+      state.modal = state.modal === 'journal' ? 'none' : 'journal';
+      state.journalPage = 0;
+    } else if (k === 't' && state.phase === 'idle') {
+      state.modal = state.modal === 'tackle' ? 'none' : 'tackle';
+    } else if (k === 'w' && state.phase === 'idle') {
+      state.modal = state.modal === 'waters' ? 'none' : 'waters';
+    } else if (k === 'z' && FULL_EDITION && state.phase === 'idle' && state.modal === 'none') {
+      state.zenMode = !state.zenMode;
+      state.zenHintTimer = 3.0;
+      rebuildZenSwimmers();
+    } else if (k === 'm') {
+      ensureAudio();
+      startMusicLoop();
+      save.musicOn = !save.musicOn;
+      persistSave();
+    } else if (k === 's') {
+      save.sfxOn = !save.sfxOn;
+      persistSave();
+    } else if (state.zenMode && FULL_EDITION && ['1', '2', '3', '4'].indexOf(k) >= 0) {
+      save.waterId = DATA.WATERS[Number(k) - 1].id;
+      persistSave();
+      rebuildZenSwimmers();
+    }
+  });
+
+  window.addEventListener('keyup', function (ev) {
+    if (ev.key === ' ' || ev.key === 'Enter') {
+      handlePrimaryUp();
+    }
+  });
+
+  // --- Main RAF Loop ---
+  let lastTs = performance.now();
+  function frame(ts) {
+    const dt = Math.min(0.05, Math.max(0, (ts - lastTs) / 1000));
+    lastTs = ts;
+    update(dt);
+    render();
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

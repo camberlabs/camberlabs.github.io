@@ -1,0 +1,116 @@
+# Camber Labs — Complete 2026 Game-Dev Tools, Storefronts & MarginPilot Directory
+Last Verified: 2026-11-15
+Hub URL: https://camberlabs.github.io/
+MarginPilot SaaS Network: https://camberlabs.github.io/marginpilot/
+5-in-1 Indie Dev Suite (£16.99): https://itch.io/s/218099/camber-labs-game-maker-toolkit-all-5-tools
+Founder CFO Kit ($19): https://camberlabs.gumroad.com/l/founder-cfo-kit-2026?wanted=true
+
+## 10 Game Storefront 2026 Commission Schedules
+| Storefront | Category | Base Cut % | Listing Fee | Calculator URL |
+|---|---|---|---|---|
+| Steam (Valve) | PC Digital Storefront | 30% | $100 | https://camberlabs.github.io/storefronts/steam-revenue-calculator/ |
+| itch.io (Direct Stripe Mode) | Indie Creator Storefront | 0% | $0 | https://camberlabs.github.io/storefronts/itch-io-revenue-calculator/ |
+| Epic Games Store | PC Digital Storefront | 12% | $100 | https://camberlabs.github.io/storefronts/epic-games-store-revenue-calculator/ |
+| GOG.com | PC DRM-Free Storefront | 30% | $0 | https://camberlabs.github.io/storefronts/gog-revenue-calculator/ |
+| Humble Store (Direct / Widget) | PC Keys & Creator Widget | 25% | $0 | https://camberlabs.github.io/storefronts/humble-store-revenue-calculator/ |
+| Apple App Store | Mobile Storefront | 15% | $99 | https://camberlabs.github.io/storefronts/apple-app-store-revenue-calculator/ |
+| Google Play Store | Mobile Storefront | 15% | $25 | https://camberlabs.github.io/storefronts/google-play-revenue-calculator/ |
+| Nintendo Switch eShop | Console Storefront | 30% | $0 | https://camberlabs.github.io/storefronts/nintendo-eshop-revenue-calculator/ |
+| PlayStation Store (PS4/PS5) | Console Storefront | 30% | $0 | https://camberlabs.github.io/storefronts/playstation-store-revenue-calculator/ |
+| Microsoft Store / Xbox | Console & PC Storefront | 12% | $19 | https://camberlabs.github.io/storefronts/xbox-store-revenue-calculator/ |
+
+## 52 Technical Engine & Math Calculators
+- 47-Tile Blob Autotile Bitmask & Atlas Sizer (Autotile Math): https://camberlabs.github.io/tools/47-tile-blob-autotile-atlas-calculator/ — Padded Cell = tileSize + 2*extrude; Sheet W = margin*2 + cols*cell + (cols-1)*padding
+- 16-Tile Wang & Dual-Grid Autotile Calculator (Dual-Grid Wang): https://camberlabs.github.io/tools/16-tile-wang-dual-grid-calculator/ — 4-bit vertex index = TL*1 + TR*2 + BR*4 + BL*8 (exactly 16 unique tiles vs 47)
+- Godot 4 TileMapLayer Texture Padding & Seam Extrusion Sizer (Godot 4 TileMapLayer): https://camberlabs.github.io/tools/godot-4-tilemaplayer-extrusion-bleeding-calculator/ — Each tile adds 2px extruded border so bilinear texture sampling never bleeds neighbor colors
+- RPG Maker MZ/MV 48x48 Autotile Sheet Dimensions Calculator (RPG Maker Spec): https://camberlabs.github.io/tools/rpg-maker-48x48-a1-a5-sheet-calculator/ — Standard A2 terrain block = 16x12 tiles (768x576px); B-E = 16x16 tiles (768x768px)
+- Tiled (.tmj / .tmx) Infinite Chunk & GID Memory Calculator (Tiled .TMJ Spec): https://camberlabs.github.io/tools/tiled-tmj-chunk-memory-calculator/ — Single chunk RAM = chunkTiles^2 * 4 bytes (uint32 GID + flip bitflags 0x80000000..)
+- LDtk World Grid & IntGrid Layer Budget Calculator (LDtk Workflow): https://camberlabs.github.io/tools/ldtk-world-grid-pixel-budget-calculator/ — Level Pixel Span = chunkTiles * tileSize; IntGrid bytes = chunkTiles^2 * 1 byte/cell
+- BSP Procedural Dungeon Map Pixel & Tile Count Calculator (Dungeon Generation): https://camberlabs.github.io/tools/bsp-procedural-dungeon-grid-calculator/ — 96x96 dungeon = 9,216 cells -> pairs cleanly with a 12x4 47-tile blob biome sheet
+- 2D Parallax Background Seamless Loop Width Calculator (Parallax Background): https://camberlabs.github.io/tools/2d-parallax-seamless-loop-width-calculator/ — Parallax loop width should be >= baseViewportWidth (e.g. 320px/640px) cleanly divisible by tileSize
+- 2:1 Pixel-Art Isometric Diamond Tile & World Converter (2:1 Isometric): https://camberlabs.github.io/tools/2-to-1-isometric-diamond-tile-calculator/ — screenX = (gx - gy) * (tileW / 2); screenY = (gx + gy) * (tileH / 2)
+- Unity 2D Pixels Per Unit (PPU) & Tilemap Cell Size Calculator (Unity 2D PPU): https://camberlabs.github.io/tools/unity-pixels-per-unit-ppu-grid-calculator/ — 1 Tile in World Units = tileWidthPx / PPU (keep PPU == tileWidthPx for 1.0 unit grid cells)
+- Hex Grid Geometry & Map Dimension Calculator (Hex Strategy Grid): https://camberlabs.github.io/tools/hexagonal-grid-pointy-flat-geometry-calculator/ — Pointy-top row offset = 0.75 * tileHeightPx; col step = tileWidthPx (odd-r offset += 0.5*W)
+- 2D Platformer Jump Velocity & Tile Height Gravity Calculator (Platformer Physics): https://camberlabs.github.io/tools/2d-platformer-jump-velocity-gravity-calculator/ — v0 = -sqrt(2 * gravity * jumpHeightPx); timeToApex = abs(v0) / gravity
+- Top-Down RPG Character Hitbox to Tile Corridor Calculator (RPG Collision): https://camberlabs.github.io/tools/topdown-collision-hitbox-to-tile-ratio/ — Ideal feet collider width = 65%–78% of tileWidth (e.g. 12px collider inside 16px doorway = 2px tolerance/side)
+- Pixel World Coordinate to Grid & Isometric Chunk Calculator (World Chunking): https://camberlabs.github.io/tools/pixel-world-to-chunk-coordinate-converter/ — chunkCoord = floor(tileCoord / chunkSize); isometric bbox width = (gridX + gridY) * (tileW / 2)
+- Spritesheet VRAM & Power-of-Two (POT) GPU Atlas Calculator (GPU VRAM Sizer): https://camberlabs.github.io/tools/spritesheet-rgba8888-vram-pot-calculator/ — RGBA8888 Bytes = sheetW * sheetH * 4 (or POT_W * POT_H * 4 on non-NPOT hardware)
+- VFX Flipbook Spritesheet Rows × Columns Sizer (Flipbook Packer): https://camberlabs.github.io/tools/vfx-flipbook-rows-cols-packer-calculator/ — rows = ceil(frameCount / cols); emptyWaste = cols*rows - frameCount
+- Mobile ASTC / BC7 Compressed vs RGBA8888 Texture Memory Calculator (Texture Compression): https://camberlabs.github.io/tools/mobile-astc-etc2-vs-rgba-vram-calculator/ — VRAM Bytes = totalPixels * (bitsPerPixel / 8) * (mipmaps ? 1.3333 : 1.0)
+- 2D Particle Overdraw & Flipbook Sprite Budget Calculator (Particle Performance): https://camberlabs.github.io/tools/2d-particle-burst-overdraw-fillrate-calculator/ — Small 32x32 flipbooks reduce fragment shader overdraw & fit inside L1/L2 GPU texture cache
+- Godot 4 AnimatedSprite2D & Sprite2D hframes/vframes Calculator (Godot Sprite2D): https://camberlabs.github.io/tools/godot-4-animatedsprite2d-sheet-calculator/ — Set hframes = cols, vframes = ceil(frameCount / cols), zero padding when using exact grid split
+- 2048x2048 vs 4096x4096 Master Sprite Atlas VRAM Calculator (Atlas Limit Check): https://camberlabs.github.io/tools/sprite-atlas-2048-vs-4096-pack-estimator/ — A single 4096x4096 RGBA8 texture consumes 64 MB uncompressed (85.3 MB with mipmaps)
+- Texture Mipmap Chain (+33.3% VRAM) Calculator (Mipmap Memory): https://camberlabs.github.io/tools/mipmap-vram-overhead-33-percent-calculator/ — Geometric mip chain sum (1 + 1/4 + 1/16 + ...) converges to exactly 4/3 (+33.33% RAM)
+- Pixel-Art Integer Viewport Scaling Calculator (720p / 1080p / 1440p / 4K) (Pixel-Perfect Camera): https://camberlabs.github.io/tools/pixel-art-integer-scaling-resolution-calculator/ — 320x180 scales cleanly by exact integer 4x -> 720p, 6x -> 1080p, 8x -> 1440p, 12x -> 4K!
+- Unity URP 2D Orthographic Camera Size Calculator (Unity Orthographic): https://camberlabs.github.io/tools/unity-urp-2d-orthographic-camera-size-calculator/ — orthographicSize = (baseHeightPx / PixelsPerUnit) * 0.5 (e.g. 360 / 32 / 2 = 5.625)
+- 384x216 vs 480x270 vs 640x360 Pixel Base Resolution Calculator (Resolution Choice): https://camberlabs.github.io/tools/godot-4-384x216-vs-480x270-viewport-calculator/ — 384x216 gives exact 5x @ 1080p and 10x @ 4K with crisp room for 16px/24px HD-pixel sprites
+- Screen Shake Trauma² / Trauma³ Envelope & Decay Calculator (Game Feel / Juice): https://camberlabs.github.io/tools/screen-shake-trauma-squared-decay-calculator/ — shake = clamp(trauma, 0, 1)^2; recoverTime = trauma / decayPerSec (GDC Math for Game Feel)
+- Steam Deck 1280x800 (16:10) Scaling & Overscan Margin Calculator (Steam Deck Verified): https://camberlabs.github.io/tools/steam-deck-1280x800-aspect-ratio-calculator/ — 320x180 -> 4x scale = 1280x720 with clean 40px top + 40px bottom bars on 1280x800 Deck!
+- Ultrawide 2560x1080 / 3440x1440 Indie Camera Viewport Calculator (Ultrawide PC): https://camberlabs.github.io/tools/ultrawide-21-9-pixel-viewport-calculator/ — 480x270 * 4 = 1920x1080 (leaves 320px/side pillarbox or +80 base horizontal px expanded)
+- Sprite Animation FPS -> Milliseconds Per Frame & Clip Duration Calculator (Animation Timing): https://camberlabs.github.io/tools/flipbook-animation-fps-to-ms-calculator/ — msPerFrame = 1000 / animFps; clipMs = frameCount * msPerFrame
+- Melee Action Startup / Active / Recovery Frame-Data Calculator (Combat Frame Data): https://camberlabs.github.io/tools/melee-combat-startup-active-recovery-frame-data/ — Total Attack Duration = (startup + active + recovery) * (1000 / 60) ms
+- Hitstop / Freeze-Frame Impact Duration Calculator (Hitstop & Impact): https://camberlabs.github.io/tools/hitstop-freeze-frame-impact-duration-calculator/ — Engine.time_scale = 0.05 for hitstopMs (4 frames @ 60fps = 66.7ms feels weighty without stalling)
+- BPM-to-Milliseconds Rhythm Shader & VFX Beat Sync Calculator (Rhythm & Shader BPM): https://camberlabs.github.io/tools/bpm-synced-vfx-shader-pulse-calculator/ — Beat ms = 60000 / BPM; Frequency Hz = BPM / 60
+- Fixed Timestep Physics (Unity 50Hz vs Godot 60Hz) Frame Converter (Physics Timestep): https://camberlabs.github.io/tools/fixed-timestep-physics-50hz-vs-60hz-calculator/ — Godot 60Hz tick = 16.667ms; Unity default 50Hz FixedUpdate tick = 20.000ms
+- Coyote Time & Jump Input Buffer (ms <-> 60fps Frames) Calculator (Input Feel): https://camberlabs.github.io/tools/coyote-time-jump-buffer-ms-to-frames/ — Ideal Coyote Time = 90–120ms (~6–7 frames @ 60fps); Jump Buffer = 100–130ms (~6–8 frames)
+- 9-Slice HUD Panel Border Inset & Minimum Size Calculator (9-Slice UI): https://camberlabs.github.io/tools/9-slice-panel-border-minimum-size-calculator/ — Min Width = sliceL + sliceR; Safe Inner Width = contentW - sliceL - sliceR
+- Unity CanvasScaler Reference Resolution & Scale Factor Calculator (Unity CanvasScaler): https://camberlabs.github.io/tools/unity-canvas-scaler-dpi-reference-calculator/ — Scale Ratio = targetH / refH -> ensure rendered fontPx * ratio meets Steam Deck >= 18px min!
+- Godot 4 UI Control Stretch & Font Crispness Calculator (Godot 4 Control UI): https://camberlabs.github.io/tools/godot-4-ui-control-stretch-scale-calculator/ — At 270p -> 1080p (4x), a 10px bitmap font renders at a crisp 40 screen px!
+- Steam Deck 1280x800 Font Readability & Green-Check Calculator (Valve Deck Verified): https://camberlabs.github.io/tools/steam-deck-ui-font-readability-calculator/ — Rendered screen px at 800p = fontPx * (800 / refH). Keep dialogue >= 16px rendered on Deck (22px+ @ 1080p ref)!
+- Inventory Hotbar & Bag Grid Pixel Dimension Calculator (Inventory HUD): https://camberlabs.github.io/tools/inventory-hotbar-slot-grid-dimension-calculator/ — Hotbar Total W = sliceL + sliceR + slotCount*slotPx + (slotCount-1)*slotGapPx
+- Boss Health Bar Pixel Width & Damage-Trail Margin Calculator (Health Bar HUD): https://camberlabs.github.io/tools/boss-health-bar-width-lerp-speed-calculator/ — Inner Fill Width = contentW - sliceL - sliceR (anchor trailing white/yellow bar to exact inner rect)
+- Game UI Localization Expansion Calculator (EN -> DE/FR/ES/PT) (L10n UI Buffer): https://camberlabs.github.io/tools/localization-ui-text-expansion-calculator/ — Safe German/Russian button width = English text width * 1.35 + sliceL + sliceR
+- RPG Dialogue Typewriter CPS, Reading Time & Voice-Blip Calculator (Dialogue & Blips): https://camberlabs.github.io/tools/dialogue-typewriter-speed-and-voice-blip-calculator/ — revealSec = charCount / charsPerSec; blipCount = ceil(charCount / blipEveryChars)
+- 16-Bit PCM WAV Audio Size & Sample Rate Memory Calculator (WAV Memory Spec): https://camberlabs.github.io/tools/pcm-wav-audio-size-sample-rate-calculator/ — PCM Bytes = sampleRateHz * channels * 2 bytes (16-bit) * durationSec + 44-byte WAV header
+- Chiptune BPM to Exact Loop Length (ms & PCM Samples) Calculator (Seamless Music Loops): https://camberlabs.github.io/tools/chiptune-bpm-loop-length-samples-calculator/ — loopSec = (60 / bpm) * beats; exactSamples = round(loopSec * sampleRateHz)
+- Audio Bus Decibel (dB) to Linear Volume Slider Calculator (Audio Mixer Math): https://camberlabs.github.io/tools/decibel-db-to-linear-gain-audio-bus-calculator/ — linear = pow(10, dB / 20); dB = 20 * log10(linearSlider)
+- SFX Pitch Randomization Semitones to Playback Speed Calculator (SFX Variety): https://camberlabs.github.io/tools/sfx-pitch-shift-semitone-ratio-calculator/ — pitchScale = 2^(semitones / 12) (+3 st = 1.189x speed, -3 st = 0.841x speed)
+- Deckbuilder Hypergeometric Opening-Hand Draw Probability Calculator (Deckbuilder RNG): https://camberlabs.github.io/tools/hypergeometric-deckbuilder-card-draw-calculator/ — P(X >= 1) = 1 - C(N - K, n) / C(N, n) (exact combinatorial hypergeometric distribution)
+- RPG Armor Mitigation & Effective HP (EHP) Calculator (Armor & EHP): https://camberlabs.github.io/tools/rpg-armor-mitigation-effective-hp-ehp-calculator/ — Damage Reduction = Armor / (Armor + K); Effective HP = HP * (1 + Armor / K)
+- RPG Boss Loot Drop Rate & N-Kill Binomial Probability Calculator (Loot & Pity Math): https://camberlabs.github.io/tools/boss-loot-drop-gacha-binomial-probability-calculator/ — P(>= 1 Drop in N runs) = 1 - (1 - p)^N; Runs for 90% certainty = ceil(ln(0.1) / ln(1 - p))
+- RPG Experience (XP) Curve Power-Law & Level Budget Calculator (XP Curve Design): https://camberlabs.github.io/tools/rpg-xp-leveling-curve-exponent-calculator/ — XP(L -> L+1) = round(xpBase * L^xpExp); Cumulative XP = sum from L=1..targetLevel-1
+- ARPG Critical Hit Chance × Multiplier Expected DPS Calculator (Combat DPS): https://camberlabs.github.io/tools/arpg-crit-damage-average-dps-calculator/ — Expected Hit = baseDmg * (1 + critChance * (critMult - 1)); DPS = ExpectedHit * attacksPerSec
+- Time-to-Kill (TTK) & Shots-to-Kill (STK) Enemy Balance Calculator (TTK & Enemy HP): https://camberlabs.github.io/tools/shooter-roguelike-ttk-shots-to-kill-calculator/ — Effective Shot Damage = baseDmg * (K / (K + Armor)); TTK = (STK - 1) / fireRateAPS
+- Idle / Roguelike Exponential Upgrade Cost & Buy-N Sum Calculator (Idle Economy): https://camberlabs.github.io/tools/idle-incremental-geometric-upgrade-cost-calculator/ — Sum for N levels from k=0 = Base * (r^N - 1) / (r - 1) (standard Cookie Clicker r = 1.15)
+
+## 40 Indie Game Launch Revenue Scenarios
+- Steam $9.99 Indie Game: How Much Do You Keep on 1,000 Copies?: https://camberlabs.github.io/scenarios/steam-9-99-game-1000-copies-net-payout/
+- Steam $14.99 Game at 5,000 Copies: Real Indie Take-Home Calculator: https://camberlabs.github.io/scenarios/steam-14-99-game-5000-copies-net-revenue/
+- $19.99 Steam Game at 10,000 Copies: Exact Payout & Store Comparison: https://camberlabs.github.io/scenarios/steam-19-99-game-10000-copies-net-revenue/
+- Steam 25,000 Copies Sold ($14.99): Studio Runway & Publisher Audit: https://camberlabs.github.io/scenarios/steam-14-99-game-25000-copies-net-revenue/
+- Steam 50,000 Copies at $24.99 ($1.25M Gross): Engine Royalty Check: https://camberlabs.github.io/scenarios/steam-24-99-game-50000-copies-net-revenue/
+- $29.99 AA Indie Hit (100,000 Copies): Store, Tax & Engine Waterfall: https://camberlabs.github.io/scenarios/steam-29-99-aa-indie-100000-copies/
+- $4.99 Micro-Game on Steam (2,000 Copies): Net Payout vs Bundle Cut: https://camberlabs.github.io/scenarios/steam-4-99-budget-indie-2000-copies/
+- Steam $12M Gross Hit: Modeling the 25% Tier-2 Valve Cut: https://camberlabs.github.io/scenarios/steam-10-million-tier2-25-percent-cut/
+- Steam Wishlist-to-Sales Calculator (Conservative, Median & Hit Ratios): https://camberlabs.github.io/scenarios/steam-wishlist-to-sales-conversion-calculator/
+- Steam Next Fest Post-Demo Launch Revenue Model (8,000 Copies): https://camberlabs.github.io/scenarios/steam-next-fest-post-demo-launch-projection/
+- Selling £6.99 / $9 Indie Dev Tools & Asset Packs on itch.io (500 Sales): https://camberlabs.github.io/scenarios/itch-io-paid-asset-pack-6-99-500-sales/
+- 5-in-1 Studio Bundle ($21 / £16.99) Economics: Bundling vs Singles: https://camberlabs.github.io/scenarios/itch-io-vs-steam-paid-indie-bundle-16-99/
+- itch.io 0% vs 10% Open Revenue Share: Exact Net Impact Calculator: https://camberlabs.github.io/scenarios/itch-io-0-percent-vs-10-percent-open-revenue-share/
+- Indie Publisher 50/50 Split vs Self-Publishing: Exact Take-Home Audit: https://camberlabs.github.io/scenarios/publisher-50-50-deal-vs-self-publishing-steam/
+- 70/30 Developer-Friendly Publisher Deal Calculator (Post-Recoup): https://camberlabs.github.io/scenarios/publisher-70-30-favor-dev-split-calculator/
+- UK / EU Indie Dev on Steam: W-8BEN-E 0% vs 30% US Tax Withholding: https://camberlabs.github.io/scenarios/uk-indie-dev-steam-w8bene-vs-30-percent-withholding/
+- How Global VAT & Regional Discounts Shrink Steam Take-Home to ~57%: https://camberlabs.github.io/scenarios/regional-pricing-vat-impact-on-indie-games/
+- Steam Launch Week Discount (10% vs 20% Off) Net Revenue Test: https://camberlabs.github.io/scenarios/steam-launch-discount-10-vs-15-percent-week1/
+- Steam 50% Seasonal Sale Long-Tail Revenue Calculator: https://camberlabs.github.io/scenarios/steam-seasonal-sale-50-percent-off-longtail/
+- Godot 4 vs Unreal Engine 5 at $1.5M Gross: Exact Royalty Savings: https://camberlabs.github.io/scenarios/godot-4-vs-unreal-5-million-dollar-royalty/
+- Crossing Unity's $200k Revenue Threshold: Godot vs Unity Pro Cost: https://camberlabs.github.io/scenarios/unity-pro-200k-threshold-indie-budget/
+- Epic Games Store 88/12 + UE5 Royalty Waiver vs Steam 70/30 + 5% UE: https://camberlabs.github.io/scenarios/epic-games-store-first-run-88-12-vs-steam/
+- Indie Roguelike Deckbuilder (25,000 Copies @ $14.99): Revenue Model: https://camberlabs.github.io/scenarios/roguelike-deckbuilder-steam-25k-copies/
+- 2D Pixel Metroidvania ($19.99): Steam + Switch eShop Net Take-Home: https://camberlabs.github.io/scenarios/pixel-metroidvania-steam-switch-port-budget/
+- Cozy Pixel Farming RPG ($17.99 × 40,000 Copies): Indie Studio Payout: https://camberlabs.github.io/scenarios/cozy-farming-sim-steam-17-99-launch/
+- Bullet Heaven / Survivor-like ($6.99 × 35,000 Copies): Margin Audit: https://camberlabs.github.io/scenarios/bullet-heaven-survivor-like-6-99-launch/
+- Premium Mobile Game ($4.99 iOS & Android): 15% Store Cut Calculator: https://camberlabs.github.io/scenarios/mobile-premium-ios-android-4-99-small-biz/
+- Mobile Studio Crossing $1M Revenue: 15% -> 30% Store Fee Cliff: https://camberlabs.github.io/scenarios/mobile-game-crossing-1m-apple-google-30pct/
+- Console Port ROI ($19.99 Switch/PS5/Xbox): Units Needed to Break Even: https://camberlabs.github.io/scenarios/console-port-roi-switch-ps5-xbox/
+- 2-Person Indie Team ($14.99 × 10,000 Copies): Per-Founder Take-Home: https://camberlabs.github.io/scenarios/two-person-revshare-indie-team-breakout/
+- How Many Steam Copies Does a Solo Dev Need to Earn $60,000 Net?: https://camberlabs.github.io/scenarios/solo-dev-replace-day-job-units-needed/
+- Game OST Soundtrack & Supporter DLC ($6.99): Pure-Margin Add-On Math: https://camberlabs.github.io/scenarios/soundtrack-dlc-add-on-revenue-model/
+- Patreon Devlog + itch.io Early Access ($12.99): Hybrid Indie Runway: https://camberlabs.github.io/scenarios/patreon-plus-itch-io-early-access-funnel/
+- High Refund Rate Impact: 4% Polished Launch vs 15% Buggy Launch: https://camberlabs.github.io/scenarios/steam-refund-rate-4pct-vs-15pct-impact/
+- GOG DRM-Free Long-Tail PC Launch (5,000 Copies @ $19.99): https://camberlabs.github.io/scenarios/gog-drm-free-longtail-5000-copies/
+- Humble Store (75/25) vs Steam (70/30): Incremental Key Sales Math: https://camberlabs.github.io/scenarios/humble-store-widget-95-5-vs-store-75-25/
+- Microsoft Store PC (12% Cut) vs Xbox Console (30% Cut) Calculator: https://camberlabs.github.io/scenarios/xbox-pc-ms-store-12-percent-vs-console-30/
+- Game Jam to Commercial Release: How Fast Do You Recoup $100 Steam Fee?: https://camberlabs.github.io/scenarios/game-jam-to-steam-direct-100-breakeven/
+- One-Time B2P Steam Launch vs SaaS Dev-Tool Subscriptions (Cross-Check): https://camberlabs.github.io/scenarios/steam-recoup-saas-subscription-vs-b2p/
+- Early Access ($14.99) -> v1.0 Price Raise ($19.99) Net Delta: https://camberlabs.github.io/scenarios/steam-14-99-early-access-vs-19-99-v1-jump/

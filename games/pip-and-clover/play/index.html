@@ -1,0 +1,1891 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Pip & Clover — Web Demo</title>
+<style>
+  * { box-sizing: border-box; user-select: none; -webkit-user-select: none; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle at 50% 38%, #2e1914 0%, #180c0a 72%, #0f0706 100%);
+    color: #e8d8b7;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  .stage {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 8px;
+  }
+  canvas#game {
+    width: 960px;
+    height: 540px;
+    max-width: calc(100vw - 24px);
+    max-height: calc(100vh - 68px);
+    aspect-ratio: 16 / 9;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    border: 4px solid #5a3122;
+    outline: 2px solid #291614;
+    border-radius: 4px;
+    box-shadow: 0 18px 46px rgba(0, 0, 0, 0.78), inset 0 0 0 1px #8b4f32;
+    cursor: pointer;
+    background: #163022;
+  }
+  .bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    font-size: 12px;
+    color: #c7bea2;
+    text-align: center;
+    max-width: 960px;
+    line-height: 1.4;
+  }
+  .bar kbd {
+    background: #3d1e15;
+    border: 1px solid #8b4f32;
+    color: #fef08a;
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-size: 11px;
+    font-family: inherit;
+  }
+  .bar a {
+    color: #fef08a;
+    text-decoration: underline;
+  }
+  .seed-input-bar {
+    display: none;
+    align-items: center;
+    gap: 6px;
+    background: #3d1e15;
+    border: 2px solid #8b4f32;
+    padding: 4px 8px;
+    border-radius: 4px;
+  }
+  .seed-input-bar.visible { display: inline-flex; }
+  .seed-input-bar input {
+    background: #163022;
+    border: 1px solid #357a52;
+    color: #fef08a;
+    font-family: inherit;
+    font-size: 12px;
+    padding: 2px 6px;
+    width: 110px;
+    text-transform: uppercase;
+  }
+  .seed-input-bar button {
+    background: #8b4f32;
+    color: #fffdf5;
+    border: 1px solid #eab308;
+    font-family: inherit;
+    font-size: 11px;
+    padding: 2px 7px;
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+<div class="stage">
+  <canvas id="game" width="240" height="135"></canvas>
+  <div class="bar">
+    <span><kbd>SPACE</kbd> Roll</span>
+    <span><kbd>1</kbd>-<kbd>5</kbd> Hold Die</span>
+    <span><kbd>ENTER</kbd> Score</span>
+    <span><kbd>?</kbd> Hands &amp; Charms</span>
+    <span><kbd>M</kbd> Audio</span>
+    <span class="seed-input-bar" id="seedBar">
+      <label for="seedBox">SEED:</label>
+      <input id="seedBox" maxlength="12" value="CLOVER7" />
+      <button type="button" id="seedOkBtn">SET</button>
+    </span>
+    <span><strong>PIP &amp; CLOVER (Web Demo)</strong> &bull; Built by <strong>Camber Labs</strong> &bull; <a href="https://camberlabs.itch.io/pip-and-clover" target="_blank" rel="noopener">Get Full Edition (£3.49): 12 Nights + Endless, 45 Charms &amp; 4 Pouches &rarr;</a></span>
+  </div>
+</div>
+<script>
+(function () {
+  'use strict';
+  const FULL_EDITION = false;
+  const ITCH_URL = 'https://camberlabs.itch.io/pip-and-clover';
+  const PAL = {"ink":"#291614","woodDeep":"#3d1e15","woodMid":"#5a3122","woodLight":"#8b4f32","woodHi":"#a8643e","feltShadow":"#163022","feltDark":"#1f4d36","feltLight":"#286646","feltSpec":"#357a52","ivoryHi":"#fffdf5","ivory":"#f4eed8","ivoryShade":"#c7bea2","ivoryEdge":"#9e9378","redDark":"#7e1d26","red":"#cf3a3a","redHi":"#f06b5b","goldDark":"#a16207","gold":"#eab308","goldHi":"#fef08a","greenDark":"#245934","green":"#3b8744","greenHi":"#64b855","cloverHi":"#a6e371","slateDark":"#1e3a4c","slate":"#2b556b","slateHi":"#5896ad","plum":"#6b3457","plumHi":"#9e507b","copper":"#c96f3b","copperHi":"#f2a16b","goblinDark":"#3c6e3b","goblin":"#65a349","goblinHi":"#9bd160"};
+  const CMAP = {"k":"#291614","w":"#3d1e15","b":"#5a3122","o":"#8b4f32","h":"#a8643e","i":"#fffdf5","c":"#f4eed8","s":"#c7bea2","e":"#9e9378","d":"#7e1d26","r":"#cf3a3a","p":"#f06b5b","a":"#a16207","g":"#eab308","y":"#fef08a","v":"#245934","l":"#3b8744","m":"#64b855","n":"#a6e371","t":"#1e3a4c","u":"#2b556b","z":"#5896ad","q":"#6b3457","f":"#9e507b","j":"#c96f3b","x":"#f2a16b","G":"#65a349","D":"#3c6e3b","H":"#9bd160"};
+  const HAND_RANKS = [{"id":"five_clovers","name":"FIVE CLOVERS","short":"5 CLOVERS","baseChips":60,"baseMult":12,"desc":"All 5 dice match"},{"id":"four_kind","name":"FOUR OF A KIND","short":"4 OF KIND","baseChips":40,"baseMult":8,"desc":"4 matching dice"},{"id":"large_straight","name":"LARGE STRAIGHT","short":"LG STRAIGHT","baseChips":35,"baseMult":7,"desc":"5 dice in sequence"},{"id":"full_house","name":"FULL HOUSE","short":"FULL HOUSE","baseChips":25,"baseMult":6,"desc":"3 of a kind + a Pair"},{"id":"small_straight","name":"SMALL STRAIGHT","short":"SM STRAIGHT","baseChips":24,"baseMult":5,"desc":"4 dice in sequence"},{"id":"three_kind","name":"THREE OF A KIND","short":"3 OF KIND","baseChips":20,"baseMult":4,"desc":"3 matching dice"},{"id":"two_pair","name":"TWO PAIR","short":"TWO PAIR","baseChips":16,"baseMult":3,"desc":"2 distinct pairs"},{"id":"pair","name":"PAIR","short":"PAIR","baseChips":10,"baseMult":2,"desc":"2 matching dice"},{"id":"high_pip","name":"HIGH PIP","short":"HIGH PIP","baseChips":6,"baseMult":1,"desc":"Highest single die"}];
+  const POUCHES = [{"id":"gamblers","name":"GAMBLER'S POUCH","short":"GAMB","startGold":8,"startCharms":["loaded_copper"],"bonusChips":0,"bonusRolls":0,"desc":"Start with 8G + Loaded Copper Die"},{"id":"herbalists","name":"HERBALIST'S POUCH","short":"HERB","startGold":4,"startCharms":["pressed_clover"],"bonusChips":0,"bonusRolls":0,"desc":"Start with 4G + Pressed Clover"},{"id":"blacksmiths","name":"BLACKSMITH'S POUCH","short":"IRON","startGold":4,"startCharms":["iron_anvil"],"bonusChips":15,"bonusRolls":0,"desc":"+15 Base Chips/hand + Iron Anvil"},{"id":"fools","name":"FOOL'S POUCH","short":"FOOL","startGold":6,"startCharms":["fools_cap"],"bonusChips":0,"bonusRolls":1,"desc":"+1 Reroll/hand + 6G + Fools Cap"}];
+  const ALL_CHARMS = [{"id":"pressed_clover","name":"PRESSED CLOVER","rarity":"uncommon","cost":6,"demo":true,"desc":"X2 MULT IF HAND CONTAINS A STRAIGHT","icon":["..kkkkkkkk..",".kcccccccck.",".kcclnlccck.",".kclnmlnlck.",".kclmlvlmlk.",".kcclvvvcck.",".kclnmlnlck.",".kclmlvlmlk.",".kccclvlcck.",".kcccclccck.",".kssssssssk.","..kkkkkkkk.."]},{"id":"loaded_copper","name":"LOADED COPPER DIE","rarity":"common","cost":4,"demo":true,"desc":"+12 CHIPS PER EVEN DIE (2,4,6)","icon":["..kkkkkkkk..",".kxxxxxxxxk.",".kxkjjjjkxk.",".kxjjjjjjxk.",".kxjjjjjjxk.",".kxjjkkjjxk.",".kxjjkkjjxk.",".kxjjjjjjxk.",".kxkjjjjkxk.",".kjjjjjjjjk.",".kbbbbbbbbk.","..kkkkkkkk.."]},{"id":"ale_mug","name":"ALE MUG","rarity":"common","cost":4,"demo":true,"desc":"+1 REROLL ON EVERY HAND","icon":["...kkkkkk...","..kiiiiiik..",".kicccccik..",".kbooooobkk.",".kbohhoobok.",".kbohhoobok.",".kbohhoobkk.",".kbohhoobk..",".kbooooobk..",".kbwwwwbwk..","..kkkkkkkk..","............"]},{"id":"lucky_penny","name":"LUCKY PENNY","rarity":"common","cost":3,"demo":true,"desc":"+3 MULT, +1G IF HAND HAS A 1 OR 6","icon":["...kkkkkk...","..kxxxxxxk..",".kxjjyjjjxk.",".kxjyjjjjxk.",".kxjjjjjjxk.",".kxjjojjjxk.",".kxjjojjjxk.",".kxjjjjjjxk.",".kxjjjjjjxk.","..kjjjjjjk..","...kkkkkk...","............"]},{"id":"red_toadstool","name":"RED TOADSTOOL","rarity":"uncommon","cost":5,"demo":true,"desc":"+5 MULT ON PAIR/2P, +9 FULL HOUSE","icon":["...kkkkkk...","..krrrrrrk..",".krcprrrcrk.",".krrrprrrrk.",".krrrcrrrpk.",".kddddddddk.","..kkiccckk..","...kiccck...","...kicssk...","...kicssk...","...kssssk...","....kkkk...."]},{"id":"brass_bell","name":"BRASS BELL","rarity":"rare","cost":7,"demo":true,"desc":"X2 MULT ON YOUR FINAL HAND OF NIGHT","icon":["....kkkk....","...kggggk...","...kgyggk...","..kggygagk..","..kggygagk..","..kggygggk..",".kgggyggagk.",".kggggggagk.","kggggaaaaagk","kggggggggggk",".kkkkrrkkkk.",".....kk....."]},{"id":"oak_pip","name":"OAK PIP CHARM","rarity":"common","cost":3,"demo":true,"desc":"+10 CHIPS PER LOW DIE (1,2,3)","icon":["..kkkkkkkk..",".khhhhhhhhk.",".khoooooohk.",".khookkoohk.",".khokcckooh.",".khookkoohk.",".khoooooohk.",".kobbbbbbok.",".kobbbbbbok.",".kwwwwwwwwk.","..kkkkkkkk..","............"]},{"id":"ivory_crown","name":"IVORY CROWN","rarity":"rare","cost":8,"demo":true,"desc":"X2 MULT ON 3-KIND, 4-KIND, 5-CLOVER","icon":["............",".k...kk...k.",".ky.kggk.yk.",".kygkggkgyk.",".kgggrrgggk.",".kggcggcggk.",".kgcggggcgk.",".kgaaaaaagk.",".kggggggggk.",".kaaaaaaaak.","..kkkkkkkk..","............"]},{"id":"hearth_ember","name":"HEARTH EMBER","rarity":"common","cost":4,"demo":true,"desc":"+4 MULT IF 1+ REROLL REMAINS","icon":[".....kk.....","....kppk....","...kpyppk...","..kppyyppk..","..kpryyprk..",".kprryyrrpk.",".kprrrrrrpk.",".kdrryyrrdk.","..kdwwwwdk..","..kwwwwwwk..","...kkkkkk...","............"]},{"id":"tin_horseshoe","name":"TIN HORSESHOE","rarity":"common","cost":4,"demo":true,"desc":"+20 CHIPS & +2 MULT IF TWO 5+ DICE","icon":["..kkkkkkkk..",".kzzzzzzzzk.",".kzukkkkzuk.",".kzu....zuk.",".kzu....zuk.",".kzu....zuk.",".kzu....zuk.",".kzuk..kzuk.",".kztk..kztk.",".kkkk..kkkk.","............","............"]},{"id":"pocket_ledger","name":"POCKET LEDGER","rarity":"uncommon","cost":5,"demo":true,"desc":"+1G WHEN SCORING WITH 4+ SCORING DICE","icon":["..kkkkkkkk..",".kooooooook.",".koggggooob.",".kogyygooob.",".kooooooook.",".kboooooobk.",".kboccccobk.",".kbocsssobk.",".kboccccobk.",".kbbbbbbbbk.","..kkkkkkkk..","............"]},{"id":"moss_agate","name":"MOSS AGATE","rarity":"common","cost":4,"demo":true,"desc":"+15 CHIPS PER ODD DIE (1,3,5)","icon":["....kkkk....","...kmmmmk...","..kmnmmmlk..",".kmnmlmllmk.",".kmmllvllmk.",".kmlvvmvvvk.",".kmlvvvvvlk.","..klvvvvvk..","...kllllk...","....kkkk....","............","............"]},{"id":"tallow_candle","name":"TALLOW CANDLE","rarity":"common","cost":3,"demo":true,"desc":"+18 CHIPS PER EMPTY CHARM SLOT","icon":[".....kk.....","....kypk....","....kyyk....",".....kk.....","...kiiiik...","...kiccck...","...kiccck...","...kicssk...","...kicssk...","..kgaaaagk..","..kkkkkkkk..","............"]},{"id":"gamblers_coin","name":"GAMBLER'S COIN","rarity":"uncommon","cost":5,"demo":true,"desc":"50% CHANCE +8 MULT, ELSE +1G","icon":["...kkkkkk...","..kyyyyyyk..",".kyggggggyk.",".kyggrrggyk.",".kygrgyrgyk.",".kyggggggyk.",".kyggaaggyk.",".kaggggggak.",".kggggggggk.","..kaaaaaak..","...kkkkkk...","............"]},{"id":"carved_acorn","name":"CARVED ACORN","rarity":"common","cost":3,"demo":true,"desc":"GAINS +4 CHIPS PER PAIR/2-PAIR SCORED","icon":["....kkkk....","...kbbbbk...","..kboooobk..",".kbwbbbbwbk.",".kwwwwwwwwk.","..khhhhhhk..","..khoooohk..","..khoooohk..","...koooook..","....koook...",".....kkk....","............"]},{"id":"silver_thimble","name":"SILVER THIMBLE","rarity":"uncommon","cost":5,"demo":true,"desc":"+6 MULT IF 2 OR 3 DICE ARE HELD","icon":["....kkkk....","...kiiiik...","..kizuuizk..","..kizuiuzk..","..kzuuizuk..","..kzuuzitk..",".kizzuuuttk.",".kzuututttk.",".kttttttttk.",".kkkkkkkkkk.","............","............"]},{"id":"pantry_cheese","name":"PANTRY CHEESE","rarity":"common","cost":4,"demo":true,"desc":"+1 HAND EVERY TAVERN NIGHT","icon":[".....kkkk...","...kkyyyyk..","..kyyyyygyk.",".kyygaygyyk.",".kyyyyyggyk.",".kggggayggk.",".kggggggggk.",".kgggaggggk.",".kggggaaaak.",".kkkkkkkkkk.","............","............"]},{"id":"clover_sprig","name":"CLOVER SPRIG","rarity":"rare","cost":7,"demo":true,"desc":"+1 MULT FOR EVERY 4G IN YOUR POUCH","icon":["...kk..kk...","..knmkknmk..",".kmnmmnmmlk.",".kmllvvllmk.","..kklvvvkk..",".kmnmllmnmk.",".kmllvvllmk.","..kkkvvkkk..","....kllk....","...klvk.....","..klvk......","..kkk......."]},{"id":"alchemist_vial","name":"ALCHEMIST VIAL","rarity":"uncommon","cost":6,"demo":false,"desc":"+2 MULT PER UNIQUE PIP VALUE ROLLED","icon":["....kkkk....","....kssk....","....kzzk....","...kizzzk...","..kznnnnzk..",".kznmmmnnzk.",".kzmllllmzk.",".kzllllllzk.",".kzvvvvvvzk.","..kkkkkkkk..","............","............"]},{"id":"gilded_spoon","name":"GILDED SPOON","rarity":"uncommon","cost":5,"demo":false,"desc":"INTEREST CAP +5G (MAX 10G), +10 CHIPS","icon":["....kkkk....","...kyyyyk...","..kyggggyk..","..kygaggyk..","...kggggk...","....kggk....","....kggk....","....kgak....","....kgak....","....kgak....","....kkkk....","............"]},{"id":"blacksmith_tongs","name":"BLACKSMITH TONGS","rarity":"rare","cost":7,"demo":false,"desc":"EACH HELD DIE GRANTS +14 CHIPS","icon":["..kk....kk..",".kttk..kttk.",".kzzk..kzzk.","..kttkktkk..","...kttttk...","...kuttuk...","..ktk..ktk..",".kttk..kttk.",".ktk....ktk.",".kpk....kpk.",".kkk....kkk.","............"]},{"id":"moth_lantern","name":"MOTH LANTERN","rarity":"uncommon","cost":6,"demo":false,"desc":"GAINS +2 MULT PER NIGHT CLEARED W/ SPARE HAND","icon":["....kkkk....","...kgaagk...","..kggggggk..","..kkyyyykk..","..kgyygygk..","..kgyyyggk..","..kgyygggk..","..kggggggk..","..kgaaaaak..","..kkkkkkkk..","............","............"]},{"id":"velvet_bag","name":"VELVET DICE BAG","rarity":"rare","cost":7,"demo":false,"desc":"+1 REROLL & +10 CHIPS PER UNUSED REROLL","icon":["...kk..kk...","..kffkkffk..","...kggggk...","..kqqqqqqk..",".kqfqqqqfqk.",".kqqqqqqqqk.",".kqqqffqqqk.",".kqqqqqqqqk.",".kqqddddqqk.","..kkkkkkkk..","............","............"]},{"id":"wishing_well","name":"WISHING WELL","rarity":"mythic","cost":9,"demo":false,"desc":"X3 MULT ON 5 CLOVERS OR LARGE STRAIGHT","icon":["..kkkkkkkk..",".kboooooobk.",".kbw....wbk.",".kzk....kzk.",".kskkzzkksk.",".ksszzzzssk.",".kessssssek.",".kseeesssek.",".kessssseek.",".kkkkkkkkkk.","............","............"]},{"id":"dwarf_pickaxe","name":"DWARF PICKAXE","rarity":"uncommon","cost":5,"demo":false,"desc":"EACH 6 ROLLED ADDS +25 CHIPS & +2 MULT","icon":["..kkkkkkkk..",".kizuuuuzik.",".kzzkkkkzzk.","....khhk....","....khhk....","....kook....","....kook....","....kbbk....","....kbbk....","....kwwk....","....kkkk....","............"]},{"id":"pixie_thistle","name":"PIXIE THISTLE","rarity":"common","cost":4,"demo":false,"desc":"EACH 1 ROLLED ADDS +15 CHIPS & +3 MULT","icon":["...kkkkkk...","..kffffffk..",".kfqqqqqqfk.",".kfqffffqfk.","..kkqqqqkk..","...kmnmmk...","...kllllk...","....kllk....","..kmlvvlk...","....kllk....","....kkkk....","............"]},{"id":"fools_cap","name":"FOOL'S CAP","rarity":"rare","cost":7,"demo":false,"desc":"X2 MULT ON HIGH PIP OR PAIR HANDS","icon":[".kk......kk.","kyk..kk..kyk",".krkprrpkqk.","..krrppqqqk.","..krrqqqqqk.",".krrrrqqqqk.",".kddddqqddk.",".kggggggggk.",".kyyyyyyyyk.","..kkkkkkkk..","............","............"]},{"id":"honeycomb","name":"HONEYCOMB","rarity":"common","cost":4,"demo":false,"desc":"+25 CHIPS IF AT LEAST TWO 3s SHOW","icon":["...kkkkkk...","..kyyyyyyk..",".kygkggkgyk.",".kgyyggyygk.",".kygkggkgyk.",".kgyagggagk.",".kgyyggyygk.","..kggggggk..","..kaaaaaak..","...kkkkkk...","............","............"]},{"id":"cobblers_awl","name":"COBBLER'S AWL","rarity":"uncommon","cost":5,"demo":false,"desc":"TWO PAIR GAINS +40 CHIPS & +4 MULT","icon":["....kkkk....","...khhhhk...","...khoook...","...kobbok...","...kbbbbk...","...kggggk...","....kizk....","....kizk....","....kzk.....","....kzk.....",".....k......","............"]},{"id":"bark_rune","name":"BARK RUNE","rarity":"uncommon","cost":6,"demo":false,"desc":"GAINS +1 MULT ON ROLL W/ 0 HELD DICE","icon":["...kkkkkk...","..kboooobk..",".kbhhllhhbk.",".kbholnohbk.",".kbolnnlobk.",".kboollmobk.",".kbbollobbk.",".kbwwllwwbk.","..kwwwwwwk..","...kkkkkk...","............","............"]},{"id":"pewter_tankard","name":"PEWTER TANKARD","rarity":"common","cost":4,"demo":false,"desc":"+30 CHIPS ON FIRST HAND OF EACH NIGHT","icon":["...kkkkkk...","..kzzzzzzk..",".kziiiiizzk.",".kzuzuuuuzkk",".kzuuuuuuztk",".kzuuuuuuztk",".kzuuuuuuzkk",".kzttttttzk.",".kttttttttk.","..kkkkkkkk..","............","............"]},{"id":"fox_tail","name":"FOX TAIL","rarity":"rare","cost":8,"demo":false,"desc":"X2 MULT IF ALL 5 DICE ARE ODD OR EVEN","icon":[".....kkkk...","...kkxxxxk..","..kxxjjjjxk.",".kxjjjjjjxk.",".kjjjjjjxxk.",".kjjjjxxxxk.",".kjjjxxiick.","..kjjxiicck.","..kjbiiick..","...kkkkkk...","............","............"]},{"id":"scribes_quill","name":"SCRIBE'S QUILL","rarity":"uncommon","cost":6,"demo":false,"desc":"SHOP RESTOCK COSTS 1G & +3 MULT","icon":[".......kkk..","......kiick.",".....kicssk.","....kicssk..","...kicssk...","..kicssk....","..kcssk.....","..kksk......",".ktttk......",".ktttk......","..kkk.......","............"]},{"id":"hearth_kettle","name":"HEARTH KETTLE","rarity":"common","cost":4,"demo":false,"desc":"+6 MULT IF 3 OR FEWER UNIQUE PIP VALUES","icon":["....kkkk....","...k....k...","..kkkkkkkk..",".kttttttttk.","kttzuuuuuttk","ktzuuuuuuttk","kttttttttttk",".kttttttttk.","..kkttttkk..","...kk..kk...","............","............"]},{"id":"moonstone_ring","name":"MOONSTONE RING","rarity":"rare","cost":8,"demo":false,"desc":"X2 MULT IF DICE SUM <= 14 OR >= 24","icon":["....kkkk....","...kizzik...","..kiznmnzk..","..kizmmzzk..","...kizzik...","..kggggggk..",".kgygggggyk.",".kggkkkkggk.",".kggk..kggk.","..kkk..kkk..","............","............"]},{"id":"chanterelle","name":"CHANTERELLE","rarity":"common","cost":4,"demo":false,"desc":"+12 CHIPS PER COMMON CHARM OWNED","icon":[".kkkkkkkkkk.","kyyyyyyyyyyk",".kggggggggk.","..kgaaaagk..","...kggggk...","...kgaagk...","....kggk....","....kgak....","....kgak....","....kaak....",".....kk.....","............"]},{"id":"goblin_ledger","name":"GOBLIN LEDGER","rarity":"uncommon","cost":6,"demo":false,"desc":"+2G WHEN BUYING A CHARM, +12 CHIPS","icon":["..kkkkkkkk..",".kllllllllk.",".klHHHHHHlk.",".klHGGGGHlk.",".klHgyygHlk.",".klHGGGGHlk.",".kDDDDDDDDk.",".kDccccccDk.",".kDssssssDk.",".kDDDDDDDDk.","..kkkkkkkk..","............"]},{"id":"watchmaker_gear","name":"WATCHMAKER'S GEAR","rarity":"mythic","cost":9,"demo":false,"desc":"RETRIGGERS LEFTMOST CHARM ONCE/HAND","icon":["....k..k....","..kggggggk..",".kgkyyyykgg.","kggyggggygk.",".kggk..kggk.",".kggk..kggk.","kggyggggygk.",".kggkyyykgg.","..kggggggk..","....k..k....","............","............"]},{"id":"tavern_deed","name":"TAVERN DEED","rarity":"rare","cost":7,"demo":false,"desc":"+1G/CHARM AT NIGHT END & +20 CHIPS","icon":["..kkkkkkkk..",".kccccccssk.",".kceeeeeesk.",".kcceeeeesk.",".kccccccssk.",".kcrrcccssk.",".krrrrccssk.",".kcrrcccssk.",".kssssssssk.","..kkkkkkkk..","............","............"]},{"id":"cinnamon_stick","name":"CINNAMON STICK","rarity":"common","cost":4,"demo":false,"desc":"+5 MULT IF NO 1s AND NO 6s ROLLED","icon":[".....kkkk...","....khhook..","...khoooook.","..khoobbbook",".khoobbbbwk.","khoobbbbwk..","koobbbbwk...","kobbbbwk....",".kbbbwk.....","..kkkk......","............","............"]},{"id":"toadstool_ring","name":"TOADSTOOL RING","rarity":"mythic","cost":9,"demo":false,"desc":"X2 MULT IF YOU OWN 4+ CHARMS","icon":["...kkkkkk...","..krrkrrrk..",".krpckrcprk.",".krrkcckrrk.",".kllksskllk.",".klmnmmnmlk.",".krrkllkrrk.",".kcpkcckpck.","..krrkrrrk..","...kkkkkk...","............","............"]},{"id":"iron_anvil","name":"IRON ANVIL","rarity":"uncommon","cost":6,"demo":false,"desc":"GAINS +8 CHIPS PER FULL HOUSE / 4-KIND","icon":["............",".kkkkkkkkkk.","kzzzzzzzzzzk","kzuuuuuuuutk",".kkttttttkk.","...kttttk...","...kttttk...","..kttttttk..",".kzzzzzzzzk.",".kttttttttk.",".kkkkkkkkkk.","............"]},{"id":"crystal_decanter","name":"CRYSTAL DECANTER","rarity":"rare","cost":8,"demo":false,"desc":"X2 MULT WHEN 0 REROLLS REMAIN","icon":["....kkkk....","....kggk....","....kzzk....","...kizzzk...","..kizccczk..",".kizppppczk.",".kizrrrrczk.",".kizddddczk.",".kizzzzzzzk.","..kkkkkkkk..","............","............"]},{"id":"starlight_die","name":"STARLIGHT DIE","rarity":"mythic","cost":9,"demo":false,"desc":"+15 CHIPS & +2M PER DIE MATCHING NIGHT #","icon":["..kkkkkkkk..",".kzzzzzzzzk.",".kztuttttzk.",".ktytttyttk.",".kttttttttk.",".ktttyytttk.",".kttytttytk.",".kttttttttk.",".kzttttttzk.",".kttttttttk.","..kkkkkkkk..","............"]},{"id":"golden_four_leaf","name":"GOLDEN FOUR-LEAF","rarity":"mythic","cost":10,"demo":false,"desc":"X3 ON 5-CLOVER, X2 ON FH/4K, +6M ELSE","icon":["...kk..kk...","..kyykkggk..",".kygyggagak.",".kgggaaaagk.","..kkgaaakk..",".kygygggygk.",".kgggaaaagk.","..kkkaakkk..","....kggk....","...kgak.....","..kgak......","..kkk......."]}];
+  const GOBLIN_SPRITE = [".......kkkkkkkkkk.......",".....kkbbbbbbbbbbkk.....","....kboooooooooooobk....","...kbohhhoooooooohobk...","...kboooooooooooooobk...","..kkbwbbbbbbbbbbbbwbkk..",".kGGkwwwwwwwwwwwwwwkGGk.","kHGGkGGGGGGGGGGGGGGkGGDk","kGGDkGGkkkkGGkkkkGGkDDk.",".kkDkGkgiiGkkgiiGkGDkk..","...kkGkgkGGkkgkGGkGkk...","...kGGgkkkkggkkkkGGk....","...kGGGGGGHHHGGGGGGk....","...kGGGDDGGGGGGDDGGk....","...kGGDkcccccccckDGk....","....kGDksssssssskDk.....",".....kkDDDDDDDDDDkk.....","....kbbbbggggggbbbbk....","...kbooobgyyyggbooobk...","...kbooobggggggbooobk...","..kboooobboooobboooobk..","..kbbbbbbbbbbbbbbbbbbk..","...kkkkkkkkkkkkkkkkkk...","........................"];
+  const FONT_3X5 = {"0":["111","101","101","101","111"],"1":["010","110","010","010","111"],"2":["110","001","010","100","111"],"3":["110","001","010","001","110"],"4":["101","101","111","001","001"],"5":["111","100","110","001","110"],"6":["011","100","111","101","111"],"7":["111","001","010","010","010"],"8":["111","101","111","101","111"],"9":["111","101","111","001","110"],"A":["010","101","111","101","101"],"B":["110","101","110","101","110"],"C":["011","100","100","100","011"],"D":["110","101","101","101","110"],"E":["111","100","110","100","111"],"F":["111","100","110","100","100"],"G":["011","100","101","101","011"],"H":["101","101","111","101","101"],"I":["111","010","010","010","111"],"J":["001","001","001","101","010"],"K":["101","101","110","101","101"],"L":["100","100","100","100","111"],"M":["10001","11011","10101","10001","10001"],"N":["1001","1101","1011","1001","1001"],"O":["010","101","101","101","010"],"P":["110","101","110","100","100"],"Q":["010","101","101","011","001"],"R":["110","101","110","101","101"],"S":["011","100","010","001","110"],"T":["111","010","010","010","010"],"U":["101","101","101","101","111"],"V":["101","101","101","101","010"],"W":["10001","10001","10101","11011","10001"],"X":["101","101","010","101","101"],"Y":["101","101","010","010","010"],"Z":["111","001","010","100","111"],"+":["000","010","111","010","000"],"-":["000","000","111","000","000"],"=":["000","111","000","111","000"],":":["000","010","000","010","000"],"/":["001","001","010","100","100"],".":["000","000","000","000","010"],",":["000","000","000","010","100"],"!":["010","010","010","000","010"],"?":["110","001","010","000","010"],"&":["010","101","010","101","011"],"'":["010","010","000","000","000"],"(":["001","010","010","010","001"],")":["100","010","010","010","100"],"<":["001","010","100","010","001"],">":["100","010","001","010","100"]," ":["000","000","000","000","000"]};
+
+  const FONT_5X7 = {
+    A:['01110','10001','10001','11111','10001','10001','10001'],
+    B:['11110','10001','10001','11110','10001','10001','11110'],
+    C:['01111','10000','10000','10000','10000','10000','01111'],
+    D:['11110','10001','10001','10001','10001','10001','11110'],
+    E:['11111','10000','10000','11110','10000','10000','11111'],
+    F:['11111','10000','10000','11110','10000','10000','10000'],
+    G:['01111','10000','10000','10111','10001','10001','01110'],
+    H:['10001','10001','10001','11111','10001','10001','10001'],
+    I:['01110','00100','00100','00100','00100','00100','01110'],
+    J:['00111','00010','00010','00010','10010','10010','01100'],
+    K:['10001','10010','10100','11000','10100','10010','10001'],
+    L:['10000','10000','10000','10000','10000','10000','11111'],
+    M:['10001','11011','10101','10101','10001','10001','10001'],
+    N:['10001','11001','10101','10011','10001','10001','10001'],
+    O:['01110','10001','10001','10001','10001','10001','01110'],
+    P:['11110','10001','10001','11110','10000','10000','10000'],
+    Q:['01110','10001','10001','10001','10101','10010','01101'],
+    R:['11110','10001','10001','11110','10100','10010','10001'],
+    S:['01111','10000','10000','01110','00001','00001','11110'],
+    T:['11111','00100','00100','00100','00100','00100','00100'],
+    U:['10001','10001','10001','10001','10001','10001','01110'],
+    V:['10001','10001','10001','10001','10001','01010','00100'],
+    W:['10001','10001','10001','10101','10101','11011','10001'],
+    X:['10001','10001','01010','00100','01010','10001','10001'],
+    Y:['10001','10001','01010','00100','00100','00100','00100'],
+    Z:['11111','00001','00010','00100','01000','10000','11111'],
+    '0':['01110','10011','10101','10101','11001','10001','01110'],
+    '1':['00100','01100','00100','00100','00100','00100','01110'],
+    '2':['01110','10001','00001','00110','01000','10000','11111'],
+    '3':['11110','00001','00001','01110','00001','00001','11110'],
+    '4':['00010','00110','01010','10010','11111','00010','00010'],
+    '5':['11111','10000','10000','11110','00001','00001','11110'],
+    '6':['01110','10000','10000','11110','10001','10001','01110'],
+    '7':['11111','00001','00010','00100','01000','01000','01000'],
+    '8':['01110','10001','10001','01110','10001','10001','01110'],
+    '9':['01110','10001','10001','01111','00001','00001','01110'],
+    '&':['01100','10010','10100','01000','10101','10010','01101'],
+    '.':['00000','00000','00000','00000','00000','01100','01100'],
+    '!':['00100','00100','00100','00100','00100','00000','00100'],
+    '?':['01110','10001','00001','00110','00100','00000','00100'],
+    '+':['00000','00100','00100','11111','00100','00100','00000'],
+    '-':['00000','00000','00000','11111','00000','00000','00000'],
+    '=':['00000','00000','11111','00000','11111','00000','00000'],
+    ':':['00000','00100','00100','00000','00100','00100','00000'],
+    '/':['00001','00010','00010','00100','01000','01000','10000'],
+    "'":['00100','00100','00010','00000','00000','00000','00000'],
+    ',':['00000','00000','00000','00000','00000','00100','01000'],
+    '(':['00010','00100','01000','01000','01000','00100','00010'],
+    ')':['01000','00100','00010','00010','00010','00100','01000'],
+    '<':['00010','00100','01000','10000','01000','00100','00010'],
+    '>':['01000','00100','00010','00001','00010','00100','01000'],
+    '*':['00000','10101','01110','11111','01110','10101','00000'],
+    ' ':['00000','00000','00000','00000','00000','00000','00000']
+  };
+
+  const CHARM_POOL = FULL_EDITION ? ALL_CHARMS : ALL_CHARMS.filter((c) => c.demo);
+  const CHARM_MAP = Object.fromEntries(ALL_CHARMS.map((c) => [c.id, c]));
+
+  // Night Targets (Demo: 1..4, Full: 1..12 + Endless)
+  const NIGHT_TARGETS = [120, 240, 420, 700, 1100, 1750, 2700, 4200, 6500, 10000, 15500, 24000];
+  function getNightTarget(nightNum) {
+    if (nightNum <= NIGHT_TARGETS.length) return NIGHT_TARGETS[nightNum - 1];
+    let t = NIGHT_TARGETS[NIGHT_TARGETS.length - 1];
+    for (let i = NIGHT_TARGETS.length; i < nightNum; i++) {
+      t = Math.round((t * 1.55) / 50) * 50;
+    }
+    return t;
+  }
+
+  // Deterministic PRNG
+  function hashSeedStr(str) {
+    let h = 2166136261 >>> 0;
+    const s = String(str || 'CLOVER7').toUpperCase();
+    for (let i = 0; i < s.length; i++) {
+      h ^= s.charCodeAt(i);
+      h = Math.imul(h, 16777619) >>> 0;
+    }
+    return h || 1337;
+  }
+  function makeRng(seedInt) {
+    let s = (seedInt >>> 0) || 1337;
+    return function () {
+      s = (Math.imul(s, 1664525) + 1013904223) >>> 0;
+      return s / 4294967296;
+    };
+  }
+
+  // ==========================================================================
+  // CORE DICE HAND EVALUATION & CHARM ENGINE
+  // ==========================================================================
+  function evaluateHand(dice) {
+    const counts = [0, 0, 0, 0, 0, 0, 0];
+    for (let i = 0; i < dice.length; i++) counts[dice[i]]++;
+
+    const entries = [];
+    for (let v = 6; v >= 1; v--) {
+      if (counts[v] > 0) entries.push({ v, c: counts[v] });
+    }
+    entries.sort((a, b) => b.c - a.c || b.v - a.v);
+
+    const uniqueSorted = [];
+    for (let v = 1; v <= 6; v++) if (counts[v] > 0) uniqueSorted.push(v);
+
+    // Check straight runs
+    let bestRun = [];
+    let curRun = [];
+    for (let i = 0; i < uniqueSorted.length; i++) {
+      if (i === 0 || uniqueSorted[i] === uniqueSorted[i - 1] + 1) {
+        curRun.push(uniqueSorted[i]);
+      } else {
+        if (curRun.length > bestRun.length) bestRun = curRun;
+        curRun = [uniqueSorted[i]];
+      }
+    }
+    if (curRun.length > bestRun.length) bestRun = curRun;
+
+    const top = entries[0];
+    const second = entries[1] || { v: 0, c: 0 };
+
+    let rankId = 'high_pip';
+    let scoringIndices = [];
+
+    if (top.c === 5) {
+      rankId = 'five_clovers';
+      scoringIndices = [0, 1, 2, 3, 4];
+    } else if (top.c === 4) {
+      rankId = 'four_kind';
+      dice.forEach((d, i) => { if (d === top.v) scoringIndices.push(i); });
+    } else if (bestRun.length === 5) {
+      rankId = 'large_straight';
+      scoringIndices = [0, 1, 2, 3, 4];
+    } else if (top.c === 3 && second.c === 2) {
+      rankId = 'full_house';
+      scoringIndices = [0, 1, 2, 3, 4];
+    } else if (bestRun.length >= 4) {
+      rankId = 'small_straight';
+      const used = new Set();
+      const seq = bestRun.slice(-4);
+      dice.forEach((d, i) => {
+        if (seq.includes(d) && !used.has(d)) {
+          used.add(d);
+          scoringIndices.push(i);
+        }
+      });
+    } else if (top.c === 3) {
+      rankId = 'three_kind';
+      dice.forEach((d, i) => { if (d === top.v) scoringIndices.push(i); });
+    } else if (top.c === 2 && second.c === 2) {
+      rankId = 'two_pair';
+      dice.forEach((d, i) => { if (d === top.v || d === second.v) scoringIndices.push(i); });
+    } else if (top.c === 2) {
+      rankId = 'pair';
+      dice.forEach((d, i) => { if (d === top.v) scoringIndices.push(i); });
+    } else {
+      rankId = 'high_pip';
+      let maxIdx = 0;
+      for (let i = 1; i < dice.length; i++) {
+        if (dice[i] > dice[maxIdx]) maxIdx = i;
+      }
+      scoringIndices = [maxIdx];
+    }
+
+    const rank = HAND_RANKS.find((h) => h.id === rankId);
+    let pipSum = 0;
+    for (let i = 0; i < scoringIndices.length; i++) pipSum += dice[scoringIndices[i]];
+    return {
+      rank,
+      rankId,
+      scoringIndices,
+      pipSum,
+      counts,
+      uniqueCount: uniqueSorted.length,
+      bestRunLen: bestRun.length
+    };
+  }
+
+  function applySingleCharm(charmObj, ctx, rng) {
+    const { dice, held, evalRes, state, chips, mult, isPreview } = ctx;
+    const id = charmObj.id;
+    let dChips = 0;
+    let dMult = 0;
+    let mMult = 1;
+    let dGold = 0;
+    let label = '';
+
+    const evenCount = dice.filter((d) => d % 2 === 0).length;
+    const oddCount = dice.length - evenCount;
+    const lowCount = dice.filter((d) => d <= 3).length;
+    const highCount = dice.filter((d) => d >= 5).length;
+    const heldCount = held.filter(Boolean).length;
+    const diceSum = dice.reduce((a, b) => a + b, 0);
+    const hasStraight = evalRes.rankId === 'small_straight' || evalRes.rankId === 'large_straight';
+
+    switch (id) {
+      case 'pressed_clover':
+        if (hasStraight) { mMult = 2; label = 'X2M'; }
+        break;
+      case 'loaded_copper':
+        if (evenCount > 0) { dChips = evenCount * 12; label = '+' + dChips; }
+        break;
+      case 'ale_mug':
+        break;
+      case 'lucky_penny':
+        dMult = 3;
+        if (dice.includes(1) || dice.includes(6)) {
+          dGold = 1;
+          label = '+3M,+1G';
+        } else {
+          label = '+3M';
+        }
+        break;
+      case 'red_toadstool':
+        if (evalRes.rankId === 'full_house') { dMult = 9; label = '+9M'; }
+        else if (evalRes.rankId === 'pair' || evalRes.rankId === 'two_pair') { dMult = 5; label = '+5M'; }
+        break;
+      case 'brass_bell':
+        if (state.handsLeft === 1) { mMult = 2; label = 'X2M!'; }
+        break;
+      case 'oak_pip':
+        if (lowCount > 0) { dChips = lowCount * 10; label = '+' + dChips; }
+        break;
+      case 'ivory_crown':
+        if (['three_kind', 'four_kind', 'five_clovers'].includes(evalRes.rankId)) {
+          mMult = 2; label = 'X2M';
+        }
+        break;
+      case 'hearth_ember':
+        if (state.rollsLeft >= 1) { dMult = 4; label = '+4M'; }
+        break;
+      case 'tin_horseshoe':
+        if (highCount >= 2) { dChips = 20; dMult = 2; label = '+20,+2M'; }
+        break;
+      case 'pocket_ledger':
+        if (evalRes.scoringIndices.length >= 4) { dGold = 1; label = '+1G'; }
+        break;
+      case 'moss_agate':
+        if (oddCount > 0) { dChips = oddCount * 15; label = '+' + dChips; }
+        break;
+      case 'tallow_candle': {
+        const empty = Math.max(0, state.maxSlots - state.charms.length);
+        if (empty > 0) { dChips = empty * 18; label = '+' + dChips; }
+        break;
+      }
+      case 'gamblers_coin':
+        if (isPreview) {
+          label = '?+8M/1G';
+        } else if (rng() < 0.5) {
+          dMult = 8; label = '+8M!';
+        } else {
+          dGold = 1; label = '+1G';
+        }
+        break;
+      case 'carved_acorn':
+        if (!isPreview && (evalRes.rankId === 'pair' || evalRes.rankId === 'two_pair')) {
+          charmObj.bonusChips = (charmObj.bonusChips || 0) + 4;
+        }
+        if ((charmObj.bonusChips || 0) > 0) {
+          dChips = charmObj.bonusChips;
+          label = '+' + dChips;
+        }
+        break;
+      case 'silver_thimble':
+        if (heldCount === 2 || heldCount === 3) { dMult = 6; label = '+6M'; }
+        break;
+      case 'pantry_cheese':
+        break;
+      case 'clover_sprig': {
+        const m = Math.floor(state.gold / 4);
+        if (m > 0) { dMult = m; label = '+' + m + 'M'; }
+        break;
+      }
+      case 'alchemist_vial':
+        dMult = evalRes.uniqueCount * 2;
+        label = '+' + dMult + 'M';
+        break;
+      case 'gilded_spoon':
+        dChips = 10; label = '+10';
+        break;
+      case 'blacksmith_tongs':
+        if (heldCount > 0) { dChips = heldCount * 14; label = '+' + dChips; }
+        break;
+      case 'moth_lantern':
+        if ((charmObj.bonusMult || 0) > 0) {
+          dMult = charmObj.bonusMult;
+          label = '+' + dMult + 'M';
+        }
+        break;
+      case 'velvet_bag':
+        if (state.rollsLeft > 0) { dChips = state.rollsLeft * 10; label = '+' + dChips; }
+        break;
+      case 'wishing_well':
+        if (evalRes.rankId === 'five_clovers' || evalRes.rankId === 'large_straight') {
+          mMult = 3; label = 'X3M';
+        }
+        break;
+      case 'dwarf_pickaxe': {
+        const sixes = evalRes.counts[6];
+        if (sixes > 0) { dChips = sixes * 25; dMult = sixes * 2; label = '+' + dChips + ',+' + dMult + 'M'; }
+        break;
+      }
+      case 'pixie_thistle': {
+        const ones = evalRes.counts[1];
+        if (ones > 0) { dChips = ones * 15; dMult = ones * 3; label = '+' + dChips + ',+' + dMult + 'M'; }
+        break;
+      }
+      case 'fools_cap':
+        if (evalRes.rankId === 'high_pip' || evalRes.rankId === 'pair') { mMult = 2; label = 'X2M'; }
+        break;
+      case 'honeycomb':
+        if (evalRes.counts[3] >= 2) { dChips = 25; label = '+25'; }
+        break;
+      case 'cobblers_awl':
+        if (evalRes.rankId === 'two_pair') { dChips = 40; dMult = 4; label = '+40,+4M'; }
+        break;
+      case 'bark_rune':
+        if ((charmObj.bonusMult || 0) > 0) { dMult = charmObj.bonusMult; label = '+' + dMult + 'M'; }
+        break;
+      case 'pewter_tankard':
+        if (state.handsPlayedThisNight === 0) { dChips = 30; label = '+30'; }
+        break;
+      case 'fox_tail':
+        if (evenCount === 5 || oddCount === 5) { mMult = 2; label = 'X2M'; }
+        break;
+      case 'scribes_quill':
+        dMult = 3; label = '+3M';
+        break;
+      case 'hearth_kettle':
+        if (evalRes.uniqueCount <= 3) { dMult = 6; label = '+6M'; }
+        break;
+      case 'moonstone_ring':
+        if (diceSum <= 14 || diceSum >= 24) { mMult = 2; label = 'X2M'; }
+        break;
+      case 'chanterelle': {
+        const commons = state.charms.filter((ch) => CHARM_MAP[ch.id].rarity === 'common').length;
+        if (commons > 0) { dChips = commons * 12; label = '+' + dChips; }
+        break;
+      }
+      case 'goblin_ledger':
+        dChips = 12; label = '+12';
+        break;
+      case 'watchmaker_gear':
+        break;
+      case 'tavern_deed':
+        dChips = 20; label = '+20';
+        break;
+      case 'cinnamon_stick':
+        if (evalRes.counts[1] === 0 && evalRes.counts[6] === 0) { dMult = 5; label = '+5M'; }
+        break;
+      case 'toadstool_ring':
+        if (state.charms.length >= 4) { mMult = 2; label = 'X2M'; }
+        break;
+      case 'iron_anvil':
+        if (!isPreview && (evalRes.rankId === 'four_kind' || evalRes.rankId === 'full_house')) {
+          charmObj.bonusChips = (charmObj.bonusChips || 0) + 8;
+        }
+        if ((charmObj.bonusChips || 0) > 0) { dChips = charmObj.bonusChips; label = '+' + dChips; }
+        break;
+      case 'crystal_decanter':
+        if (state.rollsLeft === 0) { mMult = 2; label = 'X2M'; }
+        break;
+      case 'starlight_die': {
+        const targetFace = ((state.night - 1) % 6) + 1;
+        const hits = evalRes.counts[targetFace];
+        if (hits > 0) { dChips = hits * 15; dMult = hits * 2; label = '+' + dChips + ',+' + dMult + 'M'; }
+        break;
+      }
+      case 'golden_four_leaf':
+        if (evalRes.rankId === 'five_clovers') { mMult = 3; label = 'X3M'; }
+        else if (evalRes.rankId === 'full_house' || evalRes.rankId === 'four_kind') { mMult = 2; label = 'X2M'; }
+        else { dMult = 6; label = '+6M'; }
+        break;
+    }
+
+    return { dChips, dMult, mMult, dGold, label };
+  }
+
+  function simulateScore(state, isPreview) {
+    const evalRes = evaluateHand(state.dice);
+    const pouch = POUCHES.find((p) => p.id === state.pouchId);
+    const pouchChips = pouch ? pouch.bonusChips : 0;
+    let chips = evalRes.rank.baseChips + evalRes.pipSum + pouchChips;
+    let mult = evalRes.rank.baseMult;
+    const steps = [];
+    const rng = state.rng;
+
+    // Locate first non-watchmaker charm for Watchmaker's Gear retrigger
+    const firstRetargetIdx = state.charms.findIndex((c) => c.id !== 'watchmaker_gear');
+
+    for (let i = 0; i < state.charms.length; i++) {
+      const ch = state.charms[i];
+      if (ch.id === 'watchmaker_gear') {
+        if (firstRetargetIdx >= 0) {
+          const targetCharm = state.charms[firstRetargetIdx];
+          const res = applySingleCharm(targetCharm, {
+            dice: state.dice, held: state.held, evalRes, state, chips, mult, isPreview
+          }, rng);
+          if (res.dChips || res.dMult || res.mMult !== 1 || res.dGold) {
+            chips += res.dChips;
+            mult = (mult + res.dMult) * res.mMult;
+            steps.push({ slotIdx: i, charm: ch, label: 'RE:' + res.label, dChips: res.dChips, dMult: res.dMult, mMult: res.mMult, dGold: res.dGold });
+          }
+        }
+        continue;
+      }
+      const res = applySingleCharm(ch, {
+        dice: state.dice, held: state.held, evalRes, state, chips, mult, isPreview
+      }, rng);
+      if (res.dChips || res.dMult || res.mMult !== 1 || res.dGold || res.label) {
+        chips += res.dChips;
+        mult = (mult + res.dMult) * res.mMult;
+        steps.push({ slotIdx: i, charm: ch, label: res.label, dChips: res.dChips, dMult: res.dMult, mMult: res.mMult, dGold: res.dGold });
+      }
+    }
+
+    const total = Math.round(chips * mult);
+    return { evalRes, baseChips: evalRes.rank.baseChips + evalRes.pipSum + pouchChips, baseMult: evalRes.rank.baseMult, chips, mult, total, steps };
+  }
+
+  // Expose core logic for headless Node verification when running outside DOM
+  if (typeof globalThis !== 'undefined') {
+    globalThis.__PIP_ENGINE__ = {
+      evaluateHand,
+      applySingleCharm,
+      simulateScore,
+      CHARMS: ALL_CHARMS,
+      HAND_RANKS,
+      POUCHES,
+      FULL_EDITION
+    };
+  }
+
+  // ==========================================================================
+  // PROCEDURAL WEBAUDIO COZY TAVERN SFX & MUSIC
+  // ==========================================================================
+  const AudioSys = {
+    ctx: null,
+    muted: false,
+    musicPlaying: false,
+    musicTimer: null,
+    stepIdx: 0,
+    ensure() {
+      if (this.muted) return null;
+      if (!this.ctx && typeof window !== 'undefined') {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (AC) this.ctx = new AC();
+      }
+      if (this.ctx && this.ctx.state === 'suspended') {
+        this.ctx.resume().catch(() => {});
+      }
+      return this.ctx;
+    },
+    tone(freq, dur, type = 'triangle', vol = 0.12, delay = 0, endFreq = null) {
+      const ctx = this.ensure();
+      if (!ctx) return;
+      const t0 = ctx.currentTime + delay;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, t0);
+      if (endFreq) osc.frequency.exponentialRampToValueAtTime(endFreq, t0 + dur);
+      gain.gain.setValueAtTime(0.001, t0);
+      gain.gain.linearRampToValueAtTime(vol, t0 + 0.012);
+      gain.gain.exponentialRampToValueAtTime(0.001, t0 + dur);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(t0);
+      osc.stop(t0 + dur + 0.02);
+    },
+    clack(delay = 0, pitch = 1) {
+      const ctx = this.ensure();
+      if (!ctx) return;
+      // Hollow wooden cup clack
+      this.tone(240 * pitch, 0.055, 'triangle', 0.13, delay, 105 * pitch);
+      this.tone(420 * pitch, 0.035, 'sine', 0.07, delay, 190 * pitch);
+    },
+    rollDice() {
+      for (let i = 0; i < 5; i++) {
+        this.clack(i * 0.055, 0.85 + (i % 3) * 0.15);
+      }
+    },
+    lock(isLock) {
+      if (isLock) this.tone(680, 0.05, 'triangle', 0.11, 0, 880);
+      else this.tone(520, 0.05, 'triangle', 0.09, 0, 380);
+    },
+    chime(idx) {
+      const scale = [523.25, 587.33, 659.25, 783.99, 880.0, 1046.5, 1174.66, 1318.51];
+      const f = scale[Math.min(scale.length - 1, idx)];
+      this.tone(f, 0.22, 'triangle', 0.14, 0);
+      this.tone(f * 2, 0.14, 'sine', 0.05, 0.02);
+    },
+    slam() {
+      this.tone(261.63, 0.25, 'triangle', 0.11, 0);
+      this.tone(329.63, 0.25, 'triangle', 0.09, 0.03);
+      this.tone(392.0, 0.28, 'triangle', 0.1, 0.06);
+    },
+    coin() {
+      this.tone(1318.5, 0.07, 'sine', 0.1, 0);
+      this.tone(1760.0, 0.14, 'sine', 0.11, 0.055);
+    },
+    fanfare() {
+      [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => this.tone(f, 0.28, 'triangle', 0.11, i * 0.09));
+    },
+    softFail() {
+      [349.23, 329.63, 293.66, 220.0].forEach((f, i) => this.tone(f, 0.28, 'triangle', 0.1, i * 0.11));
+    },
+    startMusic() {
+      if (this.musicPlaying || this.muted) return;
+      this.musicPlaying = true;
+      const melody = [
+        293.66, 349.23, 440.0, 523.25, 440.0, 392.0, 349.23, 329.63,
+        293.66, 329.63, 392.0, 440.0, 392.0, 349.23, 329.63, 293.66
+      ];
+      const bass = [146.83, 0, 146.83, 0, 130.81, 0, 130.81, 0, 110.0, 0, 110.0, 0, 130.81, 0, 146.83, 0];
+      this.musicTimer = setInterval(() => {
+        if (this.muted || !this.ctx) return;
+        const i = this.stepIdx % melody.length;
+        this.tone(melody[i], 0.24, 'triangle', 0.032, 0);
+        if (bass[i] > 0) this.tone(bass[i], 0.28, 'sine', 0.025, 0);
+        this.stepIdx++;
+      }, 300);
+    },
+    toggleMute() {
+      this.muted = !this.muted;
+      if (this.muted && this.musicTimer) {
+        clearInterval(this.musicTimer);
+        this.musicTimer = null;
+        this.musicPlaying = false;
+      } else if (!this.muted) {
+        this.ensure();
+        this.startMusic();
+      }
+    }
+  };
+
+  // ==========================================================================
+  // CANVAS & PIXEL DRAWING HELPERS
+  // ==========================================================================
+  const canvas = document.getElementById('game');
+  if (!canvas || !canvas.getContext) return;
+  const ctx = canvas.getContext('2d');
+  ctx.imageSmoothingEnabled = false;
+
+  function pxRect(x, y, w, h, col) {
+    ctx.fillStyle = col;
+    ctx.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h));
+  }
+
+  function drawWoodBox(x, y, w, h, fill = PAL.woodMid, rim = PAL.woodLight, hi = PAL.woodHi) {
+    pxRect(x, y, w, h, PAL.ink);
+    pxRect(x + 1, y + 1, w - 2, h - 2, fill);
+    pxRect(x + 1, y + 1, w - 2, 1, hi);
+    pxRect(x + 1, y + 1, 1, h - 2, rim);
+    pxRect(x + 1, y + h - 2, w - 2, 1, PAL.woodDeep);
+    pxRect(x + w - 2, y + 1, 1, h - 2, PAL.woodDeep);
+  }
+
+  function drawFeltMat(x, y, w, h) {
+    drawWoodBox(x, y, w, h, PAL.woodMid, PAL.woodLight, PAL.woodHi);
+    const fx = x + 4;
+    const fy = y + 4;
+    const fw = w - 8;
+    const fh = h - 8;
+    pxRect(fx - 1, fy - 1, fw + 2, fh + 2, PAL.ink);
+    pxRect(fx, fy, fw, fh, PAL.feltDark);
+    ctx.fillStyle = PAL.feltLight;
+    for (let py = fy; py < fy + fh; py++) {
+      for (let px = fx + ((py % 2) ? 1 : 0); px < fx + fw; px += 2) {
+        ctx.fillRect(px, py, 1, 1);
+      }
+    }
+    pxRect(fx, fy, fw, 2, PAL.feltShadow);
+    pxRect(fx, fy, 2, fh, PAL.feltShadow);
+    pxRect(x + 2, y + 2, 1, 1, PAL.gold);
+    pxRect(x + w - 3, y + 2, 1, 1, PAL.gold);
+    pxRect(x + 2, y + h - 3, 1, 1, PAL.gold);
+    pxRect(x + w - 3, y + h - 3, 1, 1, PAL.gold);
+  }
+
+  function drawMatrix(x, y, rows, scale = 1) {
+    for (let r = 0; r < rows.length; r++) {
+      const row = rows[r];
+      for (let c = 0; c < row.length; c++) {
+        const ch = row[c];
+        if (!ch || ch === '.') continue;
+        const col = CMAP[ch];
+        if (!col) continue;
+        pxRect(x + c * scale, y + r * scale, scale, scale, col);
+      }
+    }
+  }
+
+  function drawText5(x, y, text, fg, outline = PAL.ink, scale = 1) {
+    const s = String(text || '').toUpperCase();
+    const plot = (ox, oy, col) => {
+      let cx = ox;
+      for (let i = 0; i < s.length; i++) {
+        const g = FONT_5X7[s[i]] || FONT_5X7[' '];
+        for (let r = 0; r < 7; r++) {
+          for (let c = 0; c < 5; c++) {
+            if (g[r][c] === '1') pxRect(cx + c * scale, oy + r * scale, scale, scale, col);
+          }
+        }
+        cx += 6 * scale;
+      }
+    };
+    if (outline) {
+      for (let dy = -1; dy <= 1; dy++) {
+        for (let dx = -1; dx <= 1; dx++) {
+          if (dx || dy) plot(x + dx * scale, y + dy * scale, outline);
+        }
+      }
+    }
+    plot(x, y, fg);
+  }
+
+  function drawTiny(x, y, text, fg, outline = null) {
+    const s = String(text || '').toUpperCase();
+    const plot = (ox, oy, col) => {
+      let cx = ox;
+      for (let i = 0; i < s.length; i++) {
+        const g = FONT_3X5[s[i]] || FONT_3X5[' '];
+        const gw = g[0].length;
+        for (let r = 0; r < 5; r++) {
+          for (let c = 0; c < gw; c++) {
+            if (g[r][c] === '1') pxRect(cx + c, oy + r, 1, 1, col);
+          }
+        }
+        cx += gw + 1;
+      }
+    };
+    if (outline) {
+      plot(x - 1, y, outline);
+      plot(x + 1, y, outline);
+      plot(x, y - 1, outline);
+      plot(x, y + 1, outline);
+    }
+    plot(x, y, fg);
+  }
+
+  function tinyW(t) {
+    if (!t) return 0;
+    const s = String(t).toUpperCase();
+    let w = 0;
+    for (let i = 0; i < s.length; i++) {
+      const g = FONT_3X5[s[i]] || FONT_3X5[' '];
+      w += g[0].length + 1;
+    }
+    return Math.max(0, w - 1);
+  }
+  function shortCharmTitle(name) {
+    if (!name) return '';
+    if (name.length <= 10) return name;
+    const words = name.split(' ');
+    const last = words[words.length - 1];
+    if (last.length >= 4 && last.length <= 10) return last;
+    return name.slice(0, 10);
+  }
+  function text5W(t, scale = 1) { return t ? t.length * 6 * scale - scale : 0; }
+
+  function drawDie(x, y, val, held, scoringHighlight, size = 24) {
+    pxRect(x + 2, y + 2, size, size, PAL.feltShadow);
+    if (held) pxRect(x - 1, y - 1, size + 2, size + 2, PAL.gold);
+    else if (scoringHighlight) pxRect(x - 1, y - 1, size + 2, size + 2, PAL.cloverHi);
+
+    pxRect(x, y, size, size, PAL.ink);
+    // Corner carve
+    pxRect(x, y, 1, 1, PAL.feltDark);
+    pxRect(x + size - 1, y, 1, 1, PAL.feltDark);
+    pxRect(x, y + size - 1, 1, 1, PAL.feltDark);
+    pxRect(x + size - 1, y + size - 1, 1, 1, PAL.feltDark);
+
+    pxRect(x + 1, y + 1, size - 2, size - 2, PAL.ivory);
+    pxRect(x + 1, y + 1, size - 2, 2, PAL.ivoryHi);
+    pxRect(x + 1, y + 1, 2, size - 2, PAL.ivoryHi);
+    pxRect(x + 2, y + size - 3, size - 3, 2, PAL.ivoryShade);
+    pxRect(x + size - 3, y + 2, 2, size - 3, PAL.ivoryShade);
+
+    const pipSize = size >= 22 ? 3 : 2;
+    const offA = Math.floor(size * 0.24);
+    const offM = Math.floor((size - pipSize) / 2);
+    const offB = size - offA - pipSize;
+    const coords = {
+      1: [[offM, offM]],
+      2: [[offA, offA], [offB, offB]],
+      3: [[offA, offA], [offM, offM], [offB, offB]],
+      4: [[offA, offA], [offB, offA], [offA, offB], [offB, offB]],
+      5: [[offA, offA], [offB, offA], [offM, offM], [offA, offB], [offB, offB]],
+      6: [[offA, offA], [offB, offA], [offA, offM], [offB, offM], [offA, offB], [offB, offB]]
+    }[val] || [[offM, offM]];
+
+    for (let i = 0; i < coords.length; i++) {
+      const [px, py] = coords[i];
+      const isRed = val === 1 || (val === 5 && i === 2);
+      if (val === 1 && size >= 18) {
+        const rs = pipSize + 2;
+        const rx = x + Math.floor((size - rs) / 2);
+        const ry = y + Math.floor((size - rs) / 2);
+        pxRect(rx, ry, rs, rs, PAL.red);
+        pxRect(rx, ry, 1, 1, PAL.redHi);
+        pxRect(rx + 1, ry + rs - 1, rs - 1, 1, PAL.redDark);
+      } else {
+        pxRect(x + px, y + py, pipSize, pipSize, isRed ? PAL.red : PAL.ink);
+        if (isRed) pxRect(x + px, y + py, 1, 1, PAL.redHi);
+      }
+    }
+  }
+
+  function drawCharmSlot(x, y, charmObj, selected, activeTrigger, w = 22, h = 21) {
+    const ch = CHARM_MAP[charmObj.id];
+    const borderCol = activeTrigger
+      ? PAL.ivoryHi
+      : selected
+        ? PAL.goldHi
+        : ch.rarity === 'mythic'
+          ? PAL.redHi
+          : ch.rarity === 'rare'
+            ? PAL.gold
+            : ch.rarity === 'uncommon'
+              ? PAL.greenHi
+              : PAL.woodHi;
+    pxRect(x + 1, y + 1, w, h, PAL.feltShadow);
+    pxRect(x, y, w, h, PAL.ink);
+    pxRect(x + 1, y + 1, w - 2, h - 2, borderCol);
+    pxRect(x + 2, y + 2, w - 4, h - 4, PAL.woodDeep);
+    pxRect(x + 3, y + 3, w - 6, h - 6, PAL.woodMid);
+    drawMatrix(x + Math.floor((w - 12) / 2), y + Math.floor((h - 12) / 2), ch.icon, 1);
+    if (charmObj.bonusChips) {
+      drawTiny(x + 2, y + h - 6, '+' + charmObj.bonusChips, PAL.goldHi, PAL.ink);
+    } else if (charmObj.bonusMult) {
+      drawTiny(x + 2, y + h - 6, '+' + charmObj.bonusMult + 'M', PAL.redHi, PAL.ink);
+    }
+  }
+
+  // ==========================================================================
+  // INTERACTIVE GAME STATE & LOOP
+  // ==========================================================================
+  const maxNights = FULL_EDITION ? 12 : 4;
+  const seedBar = document.getElementById('seedBar');
+  const seedBox = document.getElementById('seedBox');
+  const seedOkBtn = document.getElementById('seedOkBtn');
+
+  const G = {
+    screen: 'TITLE', // TITLE | PLAYING | SCORING | NIGHT_CLEAR | SHOP | DEMO_COMPLETE | VICTORY | GAME_OVER
+    modal: null, // null | 'HANDS' | 'CODEX'
+    codexPage: 0,
+    pouchIdx: 0,
+    pouchId: 'standard',
+    seedStr: 'CLOVER7',
+    rng: makeRng(hashSeedStr('CLOVER7')),
+    night: 1,
+    endless: false,
+    gold: 4,
+    nightScore: 0,
+    nightTarget: 120,
+    handsLeft: 3,
+    rollsLeft: 2,
+    handsPlayedThisNight: 0,
+    maxSlots: 5,
+    dice: [1, 3, 4, 5, 6],
+    held: [false, false, false, false, false],
+    rollAnim: 0,
+    charms: [],
+    selectedShelfIdx: -1,
+    hoverShelfIdx: -1,
+    hoverShopIdx: -1,
+    shopOffers: [],
+    goblinQuote: 'SHINY CHARMS, FAIR COIN!',
+    sparkles: [],
+    statusToast: '',
+    statusTimer: 0,
+    scoreAnim: null,
+    payoutSummary: null,
+    bestHandPts: 0,
+    bestHandName: 'NONE',
+    totalScoreRun: 0,
+    handsWonRun: 0,
+    mouseX: -1,
+    mouseY: -1,
+    buttons: []
+  };
+
+  const GOBLIN_QUOTES = [
+    'SHINY CHARMS, FAIR COIN!',
+    'FRESH OFF THE WAGON!',
+    'NO REFUNDS ON CURSED DICE!',
+    'SMELLS LIKE CLOVER & GOLD!',
+    'PICK A BEAUTY FOR YOUR SHELF!'
+  ];
+
+  function spawnSparkles(cx, cy, count = 10) {
+    for (let i = 0; i < count; i++) {
+      const a = (Math.PI * 2 * i) / count + Math.random() * 0.5;
+      const sp = 14 + Math.random() * 28;
+      G.sparkles.push({
+        x: cx,
+        y: cy,
+        vx: Math.cos(a) * sp,
+        vy: Math.sin(a) * sp - 10,
+        life: 0.45 + Math.random() * 0.35,
+        col: i % 3 === 0 ? PAL.ivoryHi : i % 3 === 1 ? PAL.goldHi : PAL.cloverHi
+      });
+    }
+  }
+
+  function showToast(msg, dur = 1.6) {
+    G.statusToast = msg;
+    G.statusTimer = dur;
+  }
+
+  function maxRollsPerHand() {
+    let r = 2; // Initial roll + 2 rerolls = 3 rolls total per hand
+    if (FULL_EDITION) {
+      const p = POUCHES.find((x) => x.id === G.pouchId);
+      if (p) r += p.bonusRolls;
+    }
+    G.charms.forEach((c) => {
+      if (c.id === 'ale_mug' || c.id === 'velvet_bag') r += 1;
+    });
+    return r;
+  }
+
+  function maxHandsPerNight() {
+    let h = 3;
+    G.charms.forEach((c) => {
+      if (c.id === 'pantry_cheese') h += 1;
+    });
+    return h;
+  }
+
+  function rollDiceInternal(allDice = false) {
+    if (!allDice && G.held.every(Boolean)) {
+      AudioSys.lock(false);
+      showToast('ALL DICE HELD!', 1.2);
+      return false;
+    }
+    if (!allDice) {
+      // Check Bark Rune trigger on 0-held roll
+      if (G.held.every((h) => !h)) {
+        G.charms.forEach((c) => {
+          if (c.id === 'bark_rune') {
+            c.bonusMult = (c.bonusMult || 0) + 1;
+            showToast('BARK RUNE +1 MULT!', 1.0);
+          }
+        });
+      }
+      G.rollsLeft = Math.max(0, G.rollsLeft - 1);
+    }
+    for (let i = 0; i < 5; i++) {
+      if (allDice || !G.held[i]) {
+        G.dice[i] = 1 + Math.floor(G.rng() * 6);
+      }
+    }
+    G.rollAnim = 0.42;
+    AudioSys.rollDice();
+    return true;
+  }
+
+  function startHand() {
+    G.held = [false, false, false, false, false];
+    G.rollsLeft = maxRollsPerHand();
+    rollDiceInternal(true);
+  }
+
+  function startNight(n) {
+    G.night = n;
+    G.nightScore = 0;
+    G.nightTarget = getNightTarget(n);
+    G.handsLeft = maxHandsPerNight();
+    G.handsPlayedThisNight = 0;
+    G.selectedShelfIdx = -1;
+    G.screen = 'PLAYING';
+    startHand();
+  }
+
+  function startNewRun() {
+    AudioSys.ensure();
+    AudioSys.startMusic();
+    G.rng = makeRng(hashSeedStr(G.seedStr));
+    G.endless = false;
+    G.bestHandPts = 0;
+    G.bestHandName = 'NONE';
+    G.totalScoreRun = 0;
+    G.handsWonRun = 0;
+    G.charms = [];
+    G.selectedShelfIdx = -1;
+    if (FULL_EDITION) {
+      const pouch = POUCHES[G.pouchIdx];
+      G.pouchId = pouch.id;
+      G.gold = pouch.startGold;
+      pouch.startCharms.forEach((cid) => G.charms.push({ id: cid }));
+    } else {
+      G.pouchId = 'standard';
+      G.gold = 4;
+    }
+    if (seedBar) seedBar.classList.remove('visible');
+    startNight(1);
+  }
+
+  function rollShopOffers() {
+    const ownedIds = new Set(G.charms.map((c) => c.id));
+    let candidates = CHARM_POOL.filter((c) => !ownedIds.has(c.id));
+    if (candidates.length < 3) candidates = [...CHARM_POOL];
+    const picks = [];
+    const pool = [...candidates];
+    while (picks.length < 3 && pool.length > 0) {
+      const idx = Math.floor(G.rng() * pool.length);
+      picks.push(pool.splice(idx, 1)[0]);
+    }
+    G.shopOffers = picks;
+    G.goblinQuote = GOBLIN_QUOTES[Math.floor(G.rng() * GOBLIN_QUOTES.length)];
+  }
+
+  function openShop() {
+    G.screen = 'SHOP';
+    G.selectedShelfIdx = -1;
+    rollShopOffers();
+    AudioSys.coin();
+  }
+
+  function finishNightClear() {
+    const baseReward = 4 + Math.floor((G.night - 1) / 3);
+    const spareHands = G.handsLeft;
+    const hasSpoon = G.charms.some((c) => c.id === 'gilded_spoon');
+    const intCap = hasSpoon ? 10 : 5;
+    const interest = Math.min(intCap, Math.floor(G.gold / 5));
+    const hasDeed = G.charms.some((c) => c.id === 'tavern_deed');
+    const deedBonus = hasDeed ? G.charms.length : 0;
+
+    if (spareHands > 0) {
+      G.charms.forEach((c) => {
+        if (c.id === 'moth_lantern') c.bonusMult = (c.bonusMult || 0) + 2;
+      });
+    }
+
+    const totalGain = baseReward + spareHands + interest + deedBonus;
+    G.gold += totalGain;
+    G.payoutSummary = { baseReward, spareHands, interest, deedBonus, totalGain };
+    AudioSys.fanfare();
+    spawnSparkles(155, 70, 18);
+
+    if (!FULL_EDITION && G.night >= maxNights) {
+      G.screen = 'DEMO_COMPLETE';
+    } else if (FULL_EDITION && G.night === 12 && !G.endless) {
+      G.screen = 'VICTORY';
+    } else {
+      G.screen = 'NIGHT_CLEAR';
+    }
+  }
+
+  function beginScoringHand() {
+    if (G.screen !== 'PLAYING' || G.rollAnim > 0) return;
+    const res = simulateScore(G, false);
+    G.handsLeft--;
+    G.handsPlayedThisNight++;
+    G.handsWonRun++;
+    G.screen = 'SCORING';
+    AudioSys.slam();
+    spawnSparkles(155, 50, 12);
+
+    G.scoreAnim = {
+      res,
+      phase: 'BASE', // BASE -> CHARMS -> FINAL
+      stepIdx: -1,
+      timer: 0.55,
+      dispChips: res.baseChips,
+      dispMult: res.baseMult,
+      dispGold: 0,
+      banner: res.evalRes.rank.name + ' +' + res.baseChips + ' X ' + res.baseMult + ' = ' + (res.baseChips * res.baseMult),
+      activeSlot: -1,
+      badgeText: ''
+    };
+  }
+
+  function updateScoreAnim(dt) {
+    const sa = G.scoreAnim;
+    if (!sa) return;
+    sa.timer -= dt;
+    if (sa.timer > 0) return;
+
+    if (sa.phase === 'BASE' || sa.phase === 'CHARMS') {
+      sa.stepIdx++;
+      if (sa.stepIdx < sa.res.steps.length) {
+        sa.phase = 'CHARMS';
+        const st = sa.res.steps[sa.stepIdx];
+        sa.activeSlot = st.slotIdx;
+        sa.badgeText = st.label;
+        sa.dispChips += st.dChips;
+        sa.dispMult = (sa.dispMult + st.dMult) * st.mMult;
+        if (st.dGold > 0) {
+          G.gold += st.dGold;
+          AudioSys.coin();
+        }
+        AudioSys.chime(sa.stepIdx);
+        spawnSparkles(88 + st.slotIdx * 26, 20, 7);
+        sa.banner = CHARM_MAP[st.charm.id].name + ': ' + st.label;
+        sa.timer = 0.42;
+      } else {
+        sa.phase = 'FINAL';
+        sa.activeSlot = -1;
+        sa.badgeText = '';
+        sa.dispChips = sa.res.chips;
+        sa.dispMult = sa.res.mult;
+        const pts = sa.res.total;
+        G.nightScore += pts;
+        G.totalScoreRun += pts;
+        if (pts > G.bestHandPts) {
+          G.bestHandPts = pts;
+          G.bestHandName = sa.res.evalRes.rank.name;
+        }
+        sa.banner = '+' + pts + ' PTS! (' + Math.round(sa.dispChips) + ' X ' + Math.round(sa.dispMult) + ')';
+        AudioSys.slam();
+        spawnSparkles(36, 54, 14);
+        sa.timer = 0.85;
+      }
+      return;
+    }
+
+    if (sa.phase === 'FINAL') {
+      G.scoreAnim = null;
+      if (G.nightScore >= G.nightTarget) {
+        finishNightClear();
+      } else if (G.handsLeft > 0) {
+        G.screen = 'PLAYING';
+        startHand();
+      } else {
+        AudioSys.softFail();
+        G.screen = 'GAME_OVER';
+      }
+    }
+  }
+
+  function sellCharm(idx) {
+    if (idx < 0 || idx >= G.charms.length) return;
+    const ch = CHARM_MAP[G.charms[idx].id];
+    const refund = Math.max(1, Math.floor(ch.cost / 2));
+    G.charms.splice(idx, 1);
+    G.gold += refund;
+    G.selectedShelfIdx = -1;
+    AudioSys.coin();
+    showToast('SOLD ' + ch.name + ' +' + refund + 'G', 1.4);
+  }
+
+  function moveCharm(idx, dir) {
+    const ni = idx + dir;
+    if (idx < 0 || ni < 0 || ni >= G.charms.length) return;
+    const tmp = G.charms[idx];
+    G.charms[idx] = G.charms[ni];
+    G.charms[ni] = tmp;
+    G.selectedShelfIdx = ni;
+    AudioSys.lock(true);
+  }
+
+  function buyShopCharm(offerIdx) {
+    const ch = G.shopOffers[offerIdx];
+    if (!ch) return;
+    if (G.charms.length >= G.maxSlots) {
+      AudioSys.lock(false);
+      showToast('SHELF FULL! CLICK A TOP CHARM TO SELL', 1.8);
+      return;
+    }
+    if (G.gold < ch.cost) {
+      AudioSys.lock(false);
+      showToast('NEED ' + ch.cost + 'G TO BUY!', 1.3);
+      return;
+    }
+    G.gold -= ch.cost;
+    G.charms.push({ id: ch.id });
+    G.shopOffers[offerIdx] = null;
+    if (G.charms.some((c) => c.id === 'goblin_ledger')) {
+      G.gold += 2;
+      showToast('BOUGHT + GOBLIN LEDGER +2G!', 1.5);
+    } else {
+      showToast('BOUGHT ' + ch.name + '!', 1.3);
+    }
+    AudioSys.coin();
+    spawnSparkles(102 + offerIdx * 52, 80, 10);
+  }
+
+  function restockCost() {
+    return G.charms.some((c) => c.id === 'scribes_quill') ? 1 : 2;
+  }
+
+  // ==========================================================================
+  // RENDERING ALL GAME SCREENS ON 240x135 CANVAS
+  // ==========================================================================
+  function regBtn(x, y, w, h, fn) {
+    G.buttons.push({ x, y, w, h, fn });
+  }
+
+  function drawHudShell() {
+    // Tabletop planks
+    for (let y = 0; y < 135; y += 16) {
+      pxRect(0, y, 240, 15, PAL.woodMid);
+      pxRect(0, y, 240, 1, PAL.woodLight);
+      pxRect(0, y + 15, 240, 1, PAL.woodDeep);
+    }
+
+    // Top-left plaque (Night & Gold)
+    drawWoodBox(3, 2, 69, 25, PAL.woodDeep, PAL.woodMid, PAL.woodLight);
+    const nLabel = G.endless ? ('ENDLESS N' + G.night) : ('NIGHT ' + G.night + '/' + maxNights);
+    drawTiny(7, 6, nLabel, PAL.ivory);
+    pxRect(7, 15, 6, 6, PAL.ink);
+    pxRect(8, 16, 4, 4, PAL.gold);
+    pxRect(8, 16, 1, 1, PAL.goldHi);
+    drawTiny(15, 16, G.gold + 'G', PAL.goldHi);
+    const pTag = FULL_EDITION ? (POUCHES[G.pouchIdx].short) : 'OAK';
+    drawTiny(47, 16, pTag, PAL.ivoryShade);
+
+    // Top Wooden Charm Shelf (5 slots)
+    drawWoodBox(74, 2, 136, 25, PAL.woodDeep, PAL.woodMid, PAL.woodLight);
+    for (let i = 0; i < G.maxSlots; i++) {
+      const sx = 77 + i * 26;
+      const sy = 4;
+      if (i < G.charms.length) {
+        const isTrig = G.scoreAnim && G.scoreAnim.activeSlot === i;
+        const dy = isTrig ? -2 : 0;
+        drawCharmSlot(sx, sy + dy, G.charms[i], G.selectedShelfIdx === i, isTrig, 22, 21);
+        regBtn(sx, sy, 22, 21, () => {
+          G.selectedShelfIdx = G.selectedShelfIdx === i ? -1 : i;
+          AudioSys.lock(true);
+        });
+      } else {
+        pxRect(sx, sy, 22, 21, PAL.ink);
+        pxRect(sx + 1, sy + 1, 20, 19, PAL.woodDeep);
+        pxRect(sx + 8, sy + 9, 6, 3, PAL.woodMid);
+      }
+    }
+
+    // Top-right buttons: [?] [M] [MENU]
+    drawWoodBox(212, 2, 12, 12, PAL.woodMid, PAL.woodLight, PAL.woodHi);
+    drawTiny(217, 6, '?', PAL.goldHi);
+    regBtn(212, 2, 12, 12, () => {
+      G.modal = G.modal === 'HANDS' ? null : 'HANDS';
+      AudioSys.lock(true);
+    });
+
+    drawWoodBox(225, 2, 12, 12, PAL.woodMid, PAL.woodLight, PAL.woodHi);
+    drawTiny(229, 6, AudioSys.muted ? 'X' : 'M', AudioSys.muted ? PAL.redHi : PAL.cloverHi);
+    regBtn(225, 2, 12, 12, () => {
+      AudioSys.toggleMute();
+    });
+
+    drawWoodBox(212, 15, 25, 12, PAL.woodMid, PAL.woodLight, PAL.woodHi);
+    drawTiny(215, 19, 'MENU', PAL.ivory);
+    regBtn(212, 15, 25, 12, () => {
+      G.screen = 'TITLE';
+      G.modal = null;
+      if (FULL_EDITION && seedBar) seedBar.classList.add('visible');
+    });
+
+    // Left Score Tank Panel
+    drawWoodBox(3, 29, 69, 103, PAL.woodDeep, PAL.woodMid, PAL.woodLight);
+    drawTiny(8, 33, 'SCORE TANK', PAL.ivoryShade);
+    drawTiny(8, 41, 'TGT ' + G.nightTarget, PAL.gold);
+
+    pxRect(8, 49, 59, 8, PAL.ink);
+    pxRect(9, 50, 57, 6, PAL.feltShadow);
+    const fillW = Math.max(0, Math.min(57, Math.round((G.nightScore / Math.max(1, G.nightTarget)) * 57)));
+    if (fillW > 0) {
+      pxRect(9, 50, fillW, 6, G.nightScore >= G.nightTarget ? PAL.cloverHi : PAL.gold);
+      pxRect(9, 50, fillW, 2, PAL.ivoryHi);
+    }
+    drawText5(8, 60, String(G.nightScore), PAL.ivoryHi, PAL.ink, 1);
+
+    // Live Chips x Mult readout
+    const prev = G.scoreAnim
+      ? {
+          name: G.scoreAnim.res.evalRes.rank.short,
+          chips: Math.round(G.scoreAnim.dispChips),
+          mult: Math.round(G.scoreAnim.dispMult)
+        }
+      : G.screen === 'PLAYING'
+        ? (() => {
+            const s = simulateScore(G, true);
+            return { name: s.evalRes.rank.short, chips: Math.round(s.chips), mult: Math.round(s.mult) };
+          })()
+        : { name: 'TAVERN', chips: 0, mult: 1 };
+
+    pxRect(7, 70, 61, 1, PAL.woodLight);
+    drawTiny(8, 74, prev.name, PAL.goldHi);
+
+    pxRect(7, 82, 26, 16, PAL.ink);
+    pxRect(8, 83, 24, 14, PAL.slate);
+    pxRect(8, 83, 24, 2, PAL.slateHi);
+    drawTiny(10, 88, '+' + prev.chips, PAL.ivoryHi);
+
+    drawTiny(36, 88, 'X', PAL.goldHi);
+
+    pxRect(42, 82, 26, 16, PAL.ink);
+    pxRect(43, 83, 24, 14, PAL.red);
+    pxRect(43, 83, 24, 2, PAL.redHi);
+    drawTiny(46, 88, String(prev.mult), PAL.ivoryHi);
+
+    // Hands & Rolls Pips
+    pxRect(7, 102, 61, 1, PAL.woodLight);
+    drawTiny(8, 107, 'HANDS', PAL.ivoryShade);
+    for (let i = 0; i < Math.min(4, maxHandsPerNight()); i++) {
+      pxRect(38 + i * 7, 106, 6, 6, PAL.ink);
+      pxRect(39 + i * 7, 107, 4, 4, i < G.handsLeft ? PAL.greenHi : PAL.woodMid);
+    }
+    drawTiny(8, 118, 'ROLLS', PAL.ivoryShade);
+    for (let i = 0; i < Math.min(4, maxRollsPerHand()); i++) {
+      pxRect(38 + i * 7, 117, 6, 6, PAL.ink);
+      pxRect(39 + i * 7, 118, 4, 4, i < G.rollsLeft ? PAL.goldHi : PAL.woodMid);
+    }
+  }
+
+  function drawTitleScreen() {
+    for (let y = 0; y < 135; y += 16) {
+      pxRect(0, y, 240, 15, PAL.woodMid);
+      pxRect(0, y, 240, 1, PAL.woodLight);
+    }
+    drawFeltMat(10, 10, 220, 115);
+
+    // Wooden signboard header
+    drawWoodBox(32, 6, 176, 26, PAL.woodLight, PAL.woodHi, PAL.gold);
+    pxRect(36, 9, 2, 2, PAL.goldHi);
+    pxRect(202, 9, 2, 2, PAL.goldHi);
+    const title = 'PIP & CLOVER';
+    const tw = text5W(title, 2);
+    drawText5(Math.round((240 - tw) / 2), 12, title, PAL.goldHi, PAL.ink, 2);
+
+    // Decorative Dice + Charm Trio
+    drawCharmSlot(30, 42, { id: 'pressed_clover' }, false, false, 22, 21);
+    drawCharmSlot(188, 42, { id: 'red_toadstool' }, false, false, 22, 21);
+    drawDie(60, 40, 5, false, false, 20);
+    drawDie(88, 37, 1, true, false, 22);
+    drawDie(118, 40, 4, false, false, 20);
+    drawDie(146, 39, 6, false, false, 20);
+
+    if (FULL_EDITION) {
+      const pouch = POUCHES[G.pouchIdx];
+      drawWoodBox(24, 66, 192, 27, PAL.woodDeep, PAL.woodMid, PAL.woodLight);
+      drawTiny(30, 70, '<', PAL.goldHi);
+      regBtn(24, 66, 24, 27, () => {
+        G.pouchIdx = (G.pouchIdx + POUCHES.length - 1) % POUCHES.length;
+        AudioSys.lock(true);
+      });
+      drawTiny(206, 70, '>', PAL.goldHi);
+      regBtn(192, 66, 24, 27, () => {
+        G.pouchIdx = (G.pouchIdx + 1) % POUCHES.length;
+        AudioSys.lock(true);
+      });
+      const pw = tinyW(pouch.name);
+      drawTiny(Math.round((240 - pw) / 2), 70, pouch.name, PAL.goldHi);
+      const dw = tinyW(pouch.desc);
+      drawTiny(Math.round((240 - dw) / 2), 79, pouch.desc, PAL.ivory);
+      drawTiny(86, 86, 'SEED: ' + G.seedStr, PAL.cloverHi);
+
+      // Start Run + Codex Buttons
+      drawWoodBox(32, 97, 86, 22, PAL.green, PAL.greenHi, PAL.cloverHi);
+      drawText5(47, 104, 'NEW RUN', PAL.goldHi, PAL.ink, 1);
+      regBtn(32, 97, 86, 22, startNewRun);
+
+      drawWoodBox(124, 97, 84, 22, PAL.woodLight, PAL.woodHi, PAL.gold);
+      drawText5(131, 104, 'CHARMS (45)', PAL.ivoryHi, PAL.ink, 1);
+      regBtn(124, 97, 84, 22, () => { G.modal = 'CODEX'; G.codexPage = 0; AudioSys.lock(true); });
+    } else {
+      // Demo chalkboard banner
+      pxRect(24, 66, 192, 27, PAL.ink);
+      pxRect(25, 67, 190, 25, PAL.feltShadow);
+      drawTiny(34, 71, 'WEB DEMO: NIGHTS 1-4 & 18 CHARMS', PAL.goldHi);
+      drawTiny(31, 79, 'FULL GAME: 12 NIGHTS, ENDLESS, 45 CHARMS', PAL.ivory);
+      drawTiny(45, 86, '4 POUCHES & CUSTOM RUN SEEDS', PAL.cloverHi);
+
+      drawWoodBox(32, 97, 86, 22, PAL.green, PAL.greenHi, PAL.cloverHi);
+      drawText5(44, 104, 'PLAY DEMO', PAL.goldHi, PAL.ink, 1);
+      regBtn(32, 97, 86, 22, startNewRun);
+
+      drawWoodBox(124, 97, 84, 22, PAL.woodLight, PAL.woodHi, PAL.gold);
+      drawText5(131, 104, 'CHARMS (18)', PAL.ivoryHi, PAL.ink, 1);
+      regBtn(124, 97, 84, 22, () => { G.modal = 'CODEX'; G.codexPage = 0; AudioSys.lock(true); });
+    }
+  }
+
+  function drawPlayingAndScoring() {
+    drawHudShell();
+    drawFeltMat(74, 29, 163, 77);
+    if (G.scoreAnim && G.scoreAnim.activeSlot >= 0 && G.scoreAnim.badgeText) {
+      const sx = 77 + G.scoreAnim.activeSlot * 26;
+      pxRect(sx - 1, 25, 24, 7, PAL.ink);
+      pxRect(sx, 26, 22, 5, PAL.red);
+      drawTiny(sx + 2, 26, G.scoreAnim.badgeText.slice(0, 5), PAL.goldHi);
+    }
+
+    // Top Felt Banner (Toast, Hover Inspect, Scoring Cascade, or Live Hand Preview)
+    let bannerText = '';
+    let bannerCol = PAL.goldHi;
+    if (G.scoreAnim) {
+      bannerText = G.scoreAnim.banner;
+    } else if (G.statusTimer > 0 && G.statusToast) {
+      bannerText = G.statusToast;
+      bannerCol = PAL.ivoryHi;
+    } else if (G.selectedShelfIdx >= 0 && G.charms[G.selectedShelfIdx]) {
+      const ch = CHARM_MAP[G.charms[G.selectedShelfIdx].id];
+      bannerText = ch.name + ': ' + ch.desc;
+    } else if (G.hoverShelfIdx >= 0 && G.charms[G.hoverShelfIdx]) {
+      const ch = CHARM_MAP[G.charms[G.hoverShelfIdx].id];
+      bannerText = ch.name + ': ' + ch.desc;
+    } else {
+      const s = simulateScore(G, true);
+      bannerText = s.evalRes.rank.name + '  +' + Math.round(s.chips) + ' X ' + Math.round(s.mult) + ' = ' + s.total;
+    }
+
+    if (G.scoreAnim) {
+      pxRect(77, 34, 157, 21, PAL.ink);
+      pxRect(78, 35, 155, 19, PAL.redDark);
+      pxRect(78, 35, 155, 1, PAL.gold);
+      const fit = bannerText.slice(0, 25);
+      const tw = text5W(fit, 1);
+      drawText5(77 + Math.round((157 - tw) / 2), 41, fit, PAL.goldHi, PAL.ink, 1);
+    } else {
+      pxRect(80, 35, 151, 12, PAL.ink);
+      pxRect(81, 36, 149, 10, PAL.feltShadow);
+      const fit = bannerText.slice(0, 36);
+      const tw = tinyW(fit);
+      drawTiny(80 + Math.round((151 - tw) / 2), 39, fit, bannerCol);
+    }
+
+    // 5 Dice
+    const evalNow = evaluateHand(G.dice);
+    for (let i = 0; i < 5; i++) {
+      const dx = 82 + i * 30;
+      const bounce = G.rollAnim > 0 && !G.held[i] ? Math.round(Math.sin(G.rollAnim * 35 + i) * 5) : 0;
+      const dy = (G.scoreAnim ? 65 : G.held[i] ? 54 : 58) + bounce;
+      const showVal = G.rollAnim > 0 && !G.held[i]
+        ? ((G.dice[i] + Math.floor(G.rollAnim * 18) + i) % 6) + 1
+        : G.dice[i];
+      const isScoring = evalNow.scoringIndices.includes(i);
+      drawDie(dx, dy, showVal, G.held[i], !G.scoreAnim && isScoring, 24);
+
+      if (!G.scoreAnim) {
+        if (G.held[i]) {
+          pxRect(dx + 2, dy + 25, 20, 7, PAL.ink);
+          pxRect(dx + 3, dy + 26, 18, 5, PAL.red);
+          drawTiny(dx + 5, dy + 26, 'HELD', PAL.ivoryHi);
+        } else {
+          drawTiny(dx + 10, 88, String(i + 1), PAL.feltSpec);
+        }
+        regBtn(dx, 50, 25, 39, () => {
+          if (G.screen === 'PLAYING' && G.rollAnim <= 0) {
+            G.held[i] = !G.held[i];
+            AudioSys.lock(G.held[i]);
+          }
+        });
+      }
+    }
+
+    // Bottom Controls (or Shelf Charm Manage controls when selected!)
+    if (G.selectedShelfIdx >= 0 && G.charms[G.selectedShelfIdx] && G.screen === 'PLAYING') {
+      const selCh = CHARM_MAP[G.charms[G.selectedShelfIdx].id];
+      const sellAmt = Math.max(1, Math.floor(selCh.cost / 2));
+      drawWoodBox(74, 109, 30, 23, PAL.woodMid, PAL.woodLight, PAL.woodHi);
+      drawText5(86, 117, '<', PAL.goldHi, PAL.ink, 1);
+      regBtn(74, 109, 30, 23, () => moveCharm(G.selectedShelfIdx, -1));
+
+      drawWoodBox(106, 109, 30, 23, PAL.woodMid, PAL.woodLight, PAL.woodHi);
+      drawText5(118, 117, '>', PAL.goldHi, PAL.ink, 1);
+      regBtn(106, 109, 30, 23, () => moveCharm(G.selectedShelfIdx, 1));
+
+      drawWoodBox(139, 109, 64, 23, PAL.red, PAL.redHi, PAL.goldHi);
+      drawText5(146, 117, 'SELL +' + sellAmt + 'G', PAL.goldHi, PAL.ink, 1);
+      regBtn(139, 109, 64, 23, () => sellCharm(G.selectedShelfIdx));
+
+      drawWoodBox(206, 109, 31, 23, PAL.slate, PAL.slateHi, PAL.ivoryHi);
+      drawTiny(211, 118, 'DONE', PAL.ivoryHi);
+      regBtn(206, 109, 31, 23, () => { G.selectedShelfIdx = -1; });
+    } else {
+      const canRoll = G.screen === 'PLAYING' && G.rollsLeft > 0 && G.rollAnim <= 0;
+      drawWoodBox(74, 109, 64, 23,
+        canRoll ? PAL.woodLight : PAL.woodDeep,
+        canRoll ? PAL.woodHi : PAL.woodMid,
+        canRoll ? PAL.gold : PAL.woodMid
+      );
+      drawText5(83, 117, 'ROLL (' + G.rollsLeft + ')', canRoll ? PAL.ivoryHi : PAL.ivoryEdge, PAL.ink, 1);
+      if (canRoll) {
+        regBtn(74, 109, 64, 23, () => rollDiceInternal(false));
+      }
+
+      const canScore = G.screen === 'PLAYING' && G.rollAnim <= 0;
+      drawWoodBox(140, 109, 70, 23,
+        G.scoreAnim ? PAL.gold : canScore ? PAL.red : PAL.woodDeep,
+        G.scoreAnim ? PAL.goldHi : canScore ? PAL.redHi : PAL.woodMid,
+        PAL.goldHi
+      );
+      drawText5(G.scoreAnim ? 149 : 146, 117, G.scoreAnim ? 'TALLYING!' : 'SCORE HAND', G.scoreAnim ? PAL.ink : PAL.goldHi, G.scoreAnim ? null : PAL.ink, 1);
+      if (canScore) {
+        regBtn(140, 109, 70, 23, beginScoringHand);
+      }
+
+      drawWoodBox(212, 109, 25, 23, PAL.woodMid, PAL.woodLight, PAL.woodHi);
+      drawTiny(214, 118, 'HANDS', PAL.ivory);
+      regBtn(212, 109, 25, 23, () => { G.modal = 'HANDS'; AudioSys.lock(true); });
+    }
+  }
+
+  function drawNightClearOverlay() {
+    drawHudShell();
+    drawFeltMat(74, 29, 163, 77);
+    const p = G.payoutSummary || { baseReward: 4, spareHands: 0, interest: 0, deedBonus: 0, totalGain: 4 };
+    drawText5(103, 38, 'NIGHT ' + G.night + ' CLEARED!', PAL.goldHi, PAL.ink, 1);
+    pxRect(84, 50, 143, 47, PAL.ink);
+    pxRect(85, 51, 141, 45, PAL.woodDeep);
+    drawTiny(92, 56, 'BASE WAGER REWARD: +' + p.baseReward + 'G', PAL.ivory);
+    drawTiny(92, 65, 'SPARE HANDS BONUS: +' + p.spareHands + 'G', PAL.cloverHi);
+    drawTiny(92, 74, 'POUCH INTEREST:    +' + p.interest + 'G', PAL.goldHi);
+    if (p.deedBonus > 0) drawTiny(92, 83, 'TAVERN DEED BONUS: +' + p.deedBonus + 'G', PAL.gold);
+    drawTiny(92, 89, 'TOTAL COINS EARNED: +' + p.totalGain + 'G', PAL.goldHi);
+
+    drawWoodBox(74, 109, 163, 23, PAL.green, PAL.greenHi, PAL.cloverHi);
+    drawText5(107, 117, 'VISIT PEDDLER >', PAL.goldHi, PAL.ink, 1);
+    regBtn(74, 109, 163, 23, openShop);
+  }
+
+  function drawShopScreen() {
+    drawHudShell();
+    drawWoodBox(74, 29, 163, 77, PAL.woodMid, PAL.woodLight, PAL.woodHi);
+
+    // Goblin Portrait
+    pxRect(78, 33, 28, 26, PAL.ink);
+    pxRect(79, 34, 26, 24, PAL.feltShadow);
+    drawMatrix(80, 35, GOBLIN_SPRITE, 1);
+
+    // Speech & Hover Inspect Box
+    pxRect(108, 33, 125, 26, PAL.ink);
+    pxRect(109, 34, 123, 24, PAL.woodDeep);
+    if (G.selectedShelfIdx >= 0 && G.charms[G.selectedShelfIdx]) {
+      const sc = CHARM_MAP[G.charms[G.selectedShelfIdx].id];
+      drawTiny(113, 37, sc.name, PAL.goldHi);
+      drawTiny(113, 45, sc.desc.slice(0, 29), PAL.ivory);
+      drawTiny(113, 52, 'CLICK SELL BELOW TO CLEAR SLOT', PAL.redHi);
+    } else if (G.hoverShopIdx >= 0 && G.shopOffers[G.hoverShopIdx]) {
+      const hc = G.shopOffers[G.hoverShopIdx];
+      drawTiny(113, 37, hc.name + ' (' + hc.cost + 'G)', PAL.goldHi);
+      drawTiny(113, 45, hc.desc.slice(0, 29), PAL.ivory);
+      drawTiny(113, 52, hc.desc.slice(29, 58) || ('RARITY: ' + hc.rarity), PAL.cloverHi);
+    } else {
+      drawTiny(113, 37, 'GOBLIN PEDDLER', PAL.goblinHi);
+      drawTiny(113, 45, '"' + G.goblinQuote.slice(0, 27) + '"', PAL.ivory);
+      drawTiny(113, 52, 'HOVER OR CLICK CHARMS TO BUY', PAL.goldHi);
+    }
+
+    // 3 Charm Trays
+    for (let i = 0; i < 3; i++) {
+      const ch = G.shopOffers[i];
+      const cx = 78 + i * 52;
+      const cy = 62;
+      if (ch) {
+        drawWoodBox(cx, cy, 49, 41, PAL.woodDeep, PAL.woodLight, PAL.woodHi);
+        drawCharmSlot(cx + 14, cy + 3, { id: ch.id }, G.hoverShopIdx === i, false, 20, 19);
+        const sname = shortCharmTitle(ch.name);
+        drawTiny(cx + Math.floor((49 - tinyW(sname)) / 2), cy + 24, sname, PAL.ivoryHi);
+        const canBuy = G.gold >= ch.cost && G.charms.length < G.maxSlots;
+        pxRect(cx + 12, cy + 30, 25, 9, PAL.ink);
+        pxRect(cx + 13, cy + 31, 23, 7, canBuy ? PAL.goldDark : PAL.woodMid);
+        drawTiny(cx + 18, cy + 32, ch.cost + 'G', canBuy ? PAL.goldHi : PAL.ivoryEdge);
+        regBtn(cx, cy, 49, 41, () => buyShopCharm(i));
+      } else {
+        pxRect(cx, cy, 49, 41, PAL.ink);
+        pxRect(cx + 1, cy + 1, 47, 39, PAL.woodDeep);
+        drawTiny(cx + 16, cy + 19, 'SOLD', PAL.ivoryEdge);
+      }
+    }
+
+    // Bottom Shop Controls (or Sell Shelf Bar)
+    if (G.selectedShelfIdx >= 0 && G.charms[G.selectedShelfIdx]) {
+      const selCh = CHARM_MAP[G.charms[G.selectedShelfIdx].id];
+      const sellAmt = Math.max(1, Math.floor(selCh.cost / 2));
+      drawWoodBox(74, 109, 30, 23, PAL.woodMid, PAL.woodLight, PAL.woodHi);
+      drawText5(86, 117, '<', PAL.goldHi, PAL.ink, 1);
+      regBtn(74, 109, 30, 23, () => moveCharm(G.selectedShelfIdx, -1));
+
+      drawWoodBox(106, 109, 30, 23, PAL.woodMid, PAL.woodLight, PAL.woodHi);
+      drawText5(118, 117, '>', PAL.goldHi, PAL.ink, 1);
+      regBtn(106, 109, 30, 23, () => moveCharm(G.selectedShelfIdx, 1));
+
+      drawWoodBox(139, 109, 64, 23, PAL.red, PAL.redHi, PAL.goldHi);
+      drawText5(146, 117, 'SELL +' + sellAmt + 'G', PAL.goldHi, PAL.ink, 1);
+      regBtn(139, 109, 64, 23, () => sellCharm(G.selectedShelfIdx));
+
+      drawWoodBox(206, 109, 31, 23, PAL.slate, PAL.slateHi, PAL.ivoryHi);
+      drawTiny(211, 118, 'DONE', PAL.ivoryHi);
+      regBtn(206, 109, 31, 23, () => { G.selectedShelfIdx = -1; });
+    } else {
+      const rc = restockCost();
+      const canRestock = G.gold >= rc;
+      drawWoodBox(74, 109, 74, 23, canRestock ? PAL.slate : PAL.woodDeep, PAL.slateHi, PAL.ivoryHi);
+      drawText5(80, 117, 'RESTOCK ' + rc + 'G', canRestock ? PAL.ivoryHi : PAL.ivoryEdge, PAL.ink, 1);
+      if (canRestock) {
+        regBtn(74, 109, 74, 23, () => {
+          G.gold -= rc;
+          rollShopOffers();
+          AudioSys.coin();
+        });
+      }
+
+      drawWoodBox(151, 109, 86, 23, PAL.green, PAL.greenHi, PAL.cloverHi);
+      drawText5(161, 117, 'NEXT NIGHT>', PAL.goldHi, PAL.ink, 1);
+      regBtn(151, 109, 86, 23, () => startNight(G.night + 1));
+    }
+  }
+
+  function drawEndScreens() {
+    drawHudShell();
+    drawFeltMat(74, 29, 163, 77);
+
+    if (G.screen === 'DEMO_COMPLETE') {
+      drawText5(92, 37, 'DEMO CLEARED!', PAL.goldHi, PAL.ink, 1);
+      pxRect(82, 49, 147, 50, PAL.ink);
+      pxRect(83, 50, 145, 48, PAL.feltShadow);
+      drawTiny(88, 55, 'YOU BEAT ALL 4 TAVERN NIGHTS!', PAL.cloverHi);
+      drawTiny(88, 63, 'BEST HAND: ' + G.bestHandName, PAL.ivory);
+      drawTiny(88, 70, 'TOP SCORE: ' + G.bestHandPts + ' PTS', PAL.goldHi);
+      drawTiny(88, 79, 'FULL GAME (3.49 GBP) ON ITCH:', PAL.ivory);
+      drawTiny(88, 86, '12 NIGHTS+ENDLESS, 45 CHARMS, 4 POUCHES', PAL.goldHi);
+
+      drawWoodBox(74, 109, 86, 23, PAL.goldDark, PAL.gold, PAL.goldHi);
+      drawText5(82, 117, 'GET FULL GAME', PAL.ivoryHi, PAL.ink, 1);
+      regBtn(74, 109, 86, 23, () => {
+        if (typeof window !== 'undefined') window.open(ITCH_URL, '_blank', 'noopener');
+      });
+
+      drawWoodBox(163, 109, 74, 23, PAL.green, PAL.greenHi, PAL.cloverHi);
+      drawText5(171, 117, 'PLAY AGAIN', PAL.goldHi, PAL.ink, 1);
+      regBtn(163, 109, 74, 23, startNewRun);
+    } else if (G.screen === 'VICTORY') {
+      drawText5(87, 37, 'TAVERN CHAMPION!', PAL.goldHi, PAL.ink, 1);
+      pxRect(82, 49, 147, 50, PAL.ink);
+      pxRect(83, 50, 145, 48, PAL.woodDeep);
+      drawTiny(88, 56, 'ALL 12 NIGHTS CONQUERED!', PAL.cloverHi);
+      drawTiny(88, 65, 'TOTAL SCORE: ' + G.totalScoreRun, PAL.ivory);
+      drawTiny(88, 74, 'BEST HAND: ' + G.bestHandPts + ' (' + G.bestHandName + ')', PAL.goldHi);
+      drawTiny(88, 84, 'READY FOR HIGH-STAKES ENDLESS?', PAL.ivory);
+
+      drawWoodBox(74, 109, 88, 23, PAL.red, PAL.redHi, PAL.goldHi);
+      drawText5(79, 117, 'ENDLESS MODE', PAL.goldHi, PAL.ink, 1);
+      regBtn(74, 109, 88, 23, () => { G.endless = true; openShop(); });
+
+      drawWoodBox(165, 109, 72, 23, PAL.green, PAL.greenHi, PAL.cloverHi);
+      drawText5(179, 117, 'NEW RUN', PAL.ivoryHi, PAL.ink, 1);
+      regBtn(165, 109, 72, 23, startNewRun);
+    } else {
+      drawText5(98, 37, 'OUT OF HANDS!', PAL.redHi, PAL.ink, 1);
+      pxRect(82, 49, 147, 50, PAL.ink);
+      pxRect(83, 50, 145, 48, PAL.woodDeep);
+      drawTiny(88, 56, 'REACHED NIGHT ' + G.night, PAL.ivory);
+      drawTiny(88, 65, 'NIGHT SCORE: ' + G.nightScore + ' / ' + G.nightTarget, PAL.gold);
+      drawTiny(88, 74, 'BEST HAND: ' + G.bestHandPts + ' PTS', PAL.cloverHi);
+      drawTiny(88, 84, 'SEED: ' + G.seedStr, PAL.ivoryShade);
+
+      drawWoodBox(74, 109, 82, 23, PAL.green, PAL.greenHi, PAL.cloverHi);
+      drawText5(85, 117, 'TRY AGAIN', PAL.goldHi, PAL.ink, 1);
+      regBtn(74, 109, 82, 23, startNewRun);
+
+      drawWoodBox(159, 109, 78, 23, PAL.woodMid, PAL.woodLight, PAL.woodHi);
+      drawText5(180, 117, 'TITLE', PAL.ivoryHi, PAL.ink, 1);
+      regBtn(159, 109, 78, 23, () => {
+        G.screen = 'TITLE';
+        if (FULL_EDITION && seedBar) seedBar.classList.add('visible');
+      });
+    }
+  }
+
+  function drawModalOverlay() {
+    if (!G.modal) return;
+    pxRect(12, 10, 216, 115, PAL.ink);
+    drawWoodBox(13, 11, 214, 113, PAL.woodDeep, PAL.woodMid, PAL.woodLight);
+
+    // Tabs
+    drawWoodBox(18, 15, 66, 14, G.modal === 'HANDS' ? PAL.feltDark : PAL.woodMid, PAL.woodLight, PAL.gold);
+    drawTiny(28, 20, 'HAND RANKS', PAL.goldHi);
+    regBtn(18, 15, 66, 14, () => { G.modal = 'HANDS'; });
+
+    drawWoodBox(87, 15, 68, 14, G.modal === 'CODEX' ? PAL.feltDark : PAL.woodMid, PAL.woodLight, PAL.gold);
+    drawTiny(95, 20, 'CHARMS (' + CHARM_POOL.length + ')', PAL.goldHi);
+    regBtn(87, 15, 68, 14, () => { G.modal = 'CODEX'; G.codexPage = 0; });
+
+    drawWoodBox(194, 15, 28, 14, PAL.red, PAL.redHi, PAL.goldHi);
+    drawTiny(202, 20, 'X', PAL.ivoryHi);
+    regBtn(194, 15, 28, 14, () => { G.modal = null; });
+
+    if (G.modal === 'HANDS') {
+      drawTiny(20, 34, 'HAND             BASE        RULE', PAL.ivoryShade);
+      for (let i = 0; i < HAND_RANKS.length; i++) {
+        const h = HAND_RANKS[i];
+        const y = 43 + i * 9;
+        drawTiny(20, y, h.name.slice(0, 15), PAL.goldHi);
+        drawTiny(86, y, '+' + h.baseChips + ' X ' + h.baseMult, PAL.cloverHi);
+        drawTiny(134, y, h.desc.slice(0, 22), PAL.ivory);
+      }
+    } else {
+      const perPage = 4;
+      const totalPages = Math.ceil(CHARM_POOL.length / perPage);
+      const start = G.codexPage * perPage;
+      for (let i = 0; i < perPage; i++) {
+        const ch = CHARM_POOL[start + i];
+        if (!ch) break;
+        const y = 34 + i * 20;
+        drawCharmSlot(20, y, { id: ch.id }, false, false, 18, 18);
+        drawTiny(42, y + 2, ch.name + ' (' + ch.cost + 'G)', PAL.goldHi);
+        drawTiny(42, y + 10, ch.desc.slice(0, 44), PAL.ivory);
+      }
+      drawWoodBox(20, 108, 42, 12, PAL.woodMid, PAL.woodLight, PAL.woodHi);
+      drawTiny(31, 112, '< PREV', PAL.ivoryHi);
+      regBtn(20, 108, 42, 12, () => {
+        G.codexPage = (G.codexPage + totalPages - 1) % totalPages;
+      });
+      drawTiny(98, 112, 'PAGE ' + (G.codexPage + 1) + '/' + totalPages, PAL.goldHi);
+      drawWoodBox(178, 108, 42, 12, PAL.woodMid, PAL.woodLight, PAL.woodHi);
+      drawTiny(189, 112, 'NEXT >', PAL.ivoryHi);
+      regBtn(178, 108, 42, 12, () => {
+        G.codexPage = (G.codexPage + 1) % totalPages;
+      });
+    }
+  }
+
+  function render() {
+    G.buttons = [];
+    pxRect(0, 0, 240, 135, PAL.woodDeep);
+
+    if (G.screen === 'TITLE') drawTitleScreen();
+    else if (G.screen === 'PLAYING' || G.screen === 'SCORING') drawPlayingAndScoring();
+    else if (G.screen === 'NIGHT_CLEAR') drawNightClearOverlay();
+    else if (G.screen === 'SHOP') drawShopScreen();
+    else drawEndScreens();
+
+    // Render particles
+    for (let i = 0; i < G.sparkles.length; i++) {
+      const sp = G.sparkles[i];
+      pxRect(sp.x, sp.y, 1, 1, sp.col);
+      if (sp.life > 0.22) {
+        pxRect(sp.x - 1, sp.y, 1, 1, PAL.gold);
+        pxRect(sp.x + 1, sp.y, 1, 1, PAL.gold);
+      }
+    }
+
+    if (G.modal) {
+      G.buttons = []; // Modal captures input
+      drawModalOverlay();
+    }
+  }
+
+  // ==========================================================================
+  // INPUT & FRAME LOOP
+  // ==========================================================================
+  function toLogicalCoords(ev) {
+    const r = canvas.getBoundingClientRect();
+    const lx = Math.floor(((ev.clientX - r.left) / r.width) * 240);
+    const ly = Math.floor(((ev.clientY - r.top) / r.height) * 135);
+    return { x: lx, y: ly };
+  }
+
+  canvas.addEventListener('pointermove', (ev) => {
+    const p = toLogicalCoords(ev);
+    G.mouseX = p.x;
+    G.mouseY = p.y;
+    G.hoverShelfIdx = -1;
+    G.hoverShopIdx = -1;
+    if (p.y >= 4 && p.y <= 25) {
+      for (let i = 0; i < G.charms.length; i++) {
+        const sx = 77 + i * 26;
+        if (p.x >= sx && p.x <= sx + 22) G.hoverShelfIdx = i;
+      }
+    }
+    if (G.screen === 'SHOP' && p.y >= 62 && p.y <= 103) {
+      for (let i = 0; i < 3; i++) {
+        const cx = 78 + i * 52;
+        if (p.x >= cx && p.x <= cx + 49) G.hoverShopIdx = i;
+      }
+    }
+  });
+
+  canvas.addEventListener('pointerdown', (ev) => {
+    AudioSys.ensure();
+    const p = toLogicalCoords(ev);
+    for (let i = G.buttons.length - 1; i >= 0; i--) {
+      const b = G.buttons[i];
+      if (p.x >= b.x && p.x < b.x + b.w && p.y >= b.y && p.y < b.y + b.h) {
+        b.fn();
+        render();
+        return;
+      }
+    }
+  });
+
+  if (typeof window !== 'undefined') {
+    if (FULL_EDITION && seedBar) seedBar.classList.add('visible');
+    if (seedOkBtn && seedBox) {
+      seedOkBtn.addEventListener('click', () => {
+        const clean = seedBox.value.trim().toUpperCase().replace(/[^A-Z0-9-]/g, '');
+        G.seedStr = clean || 'CLOVER7';
+        seedBox.value = G.seedStr;
+        AudioSys.lock(true);
+      });
+    }
+
+    window.addEventListener('keydown', (ev) => {
+      if (document.activeElement === seedBox) return;
+      const k = ev.key.toLowerCase();
+      if (k === 'm') { AudioSys.toggleMute(); return; }
+      if (k === '?' || k === 'h') {
+        G.modal = G.modal === 'HANDS' ? null : 'HANDS';
+        return;
+      }
+      if (k === 'escape' && G.modal) { G.modal = null; return; }
+      if (G.modal) return;
+
+      if (G.screen === 'TITLE') {
+        if (k === ' ' || k === 'enter') { ev.preventDefault(); startNewRun(); }
+        if (FULL_EDITION && k === 'arrowleft') G.pouchIdx = (G.pouchIdx + POUCHES.length - 1) % POUCHES.length;
+        if (FULL_EDITION && k === 'arrowright') G.pouchIdx = (G.pouchIdx + 1) % POUCHES.length;
+        return;
+      }
+
+      if (G.screen === 'PLAYING' && G.rollAnim <= 0) {
+        if (k >= '1' && k <= '5') {
+          const idx = parseInt(k, 10) - 1;
+          G.held[idx] = !G.held[idx];
+          AudioSys.lock(G.held[idx]);
+        } else if (k === ' ' || k === 'r') {
+          ev.preventDefault();
+          if (G.rollsLeft > 0) rollDiceInternal(false);
+        } else if (k === 'enter' || k === 's') {
+          ev.preventDefault();
+          beginScoringHand();
+        }
+      } else if (G.screen === 'NIGHT_CLEAR' && (k === ' ' || k === 'enter')) {
+        ev.preventDefault();
+        openShop();
+      } else if (G.screen === 'SHOP' && (k === ' ' || k === 'enter')) {
+        ev.preventDefault();
+        startNight(G.night + 1);
+      }
+    });
+
+    let lastTs = performance.now();
+    function tick(now) {
+      const dt = Math.min(0.05, (now - lastTs) / 1000);
+      lastTs = now;
+      if (G.rollAnim > 0) G.rollAnim = Math.max(0, G.rollAnim - dt);
+      if (G.statusTimer > 0) G.statusTimer = Math.max(0, G.statusTimer - dt);
+      for (let i = G.sparkles.length - 1; i >= 0; i--) {
+        const sp = G.sparkles[i];
+        sp.x += sp.vx * dt;
+        sp.y += sp.vy * dt;
+        sp.vy += 28 * dt;
+        sp.life -= dt;
+        if (sp.life <= 0) G.sparkles.splice(i, 1);
+      }
+      if (G.screen === 'SCORING') updateScoreAnim(dt);
+      render();
+      requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  }
+})();
+</script>
+</body>
+</html>

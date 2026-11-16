@@ -1,0 +1,1787 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mosshold — Web Demo | Camber Labs</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      min-height: 100%;
+      background: #1f2724;
+      color: #f5e7c4;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 12px;
+      user-select: none;
+    }
+    .cabinet {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      max-width: 976px;
+      width: 100%;
+    }
+    .topbar {
+      width: min(960px, 100%);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      font-size: 12px;
+      color: #e6d2a3;
+      padding: 6px 10px;
+      background: #2f231e;
+      border: 2px solid #59382a;
+      border-radius: 6px;
+    }
+    .topbar strong { color: #ffdf6b; letter-spacing: 0.05em; }
+    .controls-hint { color: #c7d9d4; font-size: 11px; }
+    canvas#game {
+      width: min(960px, calc(100vw - 24px));
+      height: auto;
+      aspect-ratio: 16 / 9;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+      border: 4px solid #38241d;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55);
+      background: #284b63;
+      cursor: crosshair;
+      touch-action: manipulation;
+    }
+    .demo-banner {
+      width: min(960px, 100%);
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 8px 12px;
+      background: #38241d;
+      border: 2px solid #8a563b;
+      border-radius: 6px;
+      font-size: 12px;
+      color: #fff2cc;
+    }
+    .demo-banner a {
+      display: inline-block;
+      padding: 5px 12px;
+      background: #f0b562;
+      color: #1f191d;
+      font-weight: bold;
+      text-decoration: none;
+      border-radius: 4px;
+      border: 1px solid #fff2cc;
+    }
+    .demo-banner a:hover { background: #ffdf6b; }
+    .footer-note {
+      font-size: 11px;
+      color: #9bb8b3;
+    }
+  </style>
+</head>
+<body>
+  <main class="cabinet">
+    <header class="topbar">
+      <span><strong>MOSSHOLD</strong> MEADOW ISLE DEMO</span>
+      <span class="controls-hint">Click: Build | Right-Click / [X]: Refund | [1-5]: Slot | [Space]: Dusk Bell | [M]: Mute</span>
+    </header>
+    <canvas id="game" width="240" height="135"></canvas>
+    
+    <aside class="demo-banner">
+      <span>Enjoying Meadow Isle (Days 1–5)? Unlock all 4 Islands, 15-Day Campaign, Endless &amp; Peaceful Diorama Mode + OST.</span>
+      <a href="https://camberlabs.itch.io/mosshold" target="_blank" rel="noopener noreferrer">Get Full Edition (£3.99)</a>
+    </aside>
+    <footer class="footer-note">Camber Labs &middot; camberlabs@gmail.com</footer>
+  </main>
+
+  <script>
+  (() => {
+    'use strict';
+    const DATA = {"FULL_EDITION":false,"PAL":{"skyDeep":"#406f83","skyTeal":"#548c9e","skyMid":"#6fa4b3","skyLight":"#9bc6c7","cloudCream":"#fff2cc","cloudMist":"#d7e8e3","duskDeep":"#261e36","duskPlum":"#3a2d4c","duskMid":"#563c66","duskHorizon":"#8e516b","dawnSky":"#6d7b9c","dawnGold":"#e59a66","dawnPeach":"#f4c686","seaDeep":"#284b63","seaMid":"#3e6d88","seaLight":"#5a94a8","seaFoam":"#7ec4cf","seaCrest":"#d7f2ec","duskSeaDeep":"#1d2840","duskSeaMid":"#2a3d5c","duskSeaFoam":"#4f6e8f","pineDark":"#1b3324","pineMid":"#2e5736","meadowDark":"#3f6e39","meadowMid":"#5a8f45","meadowLit":"#77ad4e","meadowTop":"#8ac457","sandDark":"#b8945e","sandLight":"#e3c78d","berryDark":"#9e2f3b","berryRed":"#d94c4c","berryLit":"#f2827f","ink":"#1f191d","stoneDeep":"#3d444d","stoneMid":"#6b747e","stoneLit":"#9aa5ad","stoneHi":"#c4ccd1","woodDeep":"#38241d","woodDark":"#59382a","woodMid":"#8a563b","woodLit":"#b57b52","brickDark":"#8c4432","brickMid":"#c26444","thatchMid":"#d98f4e","thatchLit":"#f0b562","plasterDark":"#baa17c","plasterLit":"#e3d0ab","cream":"#fff2cc","amberGlow":"#ffdf6b","amberCore":"#fff6b8","winCool":"#465d73","parchmentDark":"#b89b6e","parchmentMid":"#e6d2a3","parchmentLit":"#f5e7c4","impDark":"#263847","impMid":"#446778","impLit":"#7ec4cf","impPlum":"#703d5e"},"FONT_MINI":{"0":["111","101","101","101","111"],"1":["010","110","010","010","111"],"2":["110","001","010","100","111"],"3":["110","001","010","001","110"],"4":["101","101","111","001","001"],"5":["111","100","110","001","110"],"6":["011","100","111","101","111"],"7":["111","001","010","010","010"],"8":["111","101","111","101","111"],"9":["111","101","111","001","110"],"A":["010","101","111","101","101"],"B":["110","101","110","101","110"],"C":["011","100","100","100","011"],"D":["110","101","101","101","110"],"E":["111","100","110","100","111"],"F":["111","100","110","100","100"],"G":["0111","1000","1011","1001","0110"],"H":["101","101","111","101","101"],"I":["111","010","010","010","111"],"J":["001","001","001","101","010"],"K":["101","101","110","101","101"],"L":["100","100","100","100","111"],"M":["10001","11011","10101","10001","10001"],"N":["1001","1101","1011","1001","1001"],"O":["010","101","101","101","010"],"P":["110","101","110","100","100"],"Q":["0110","1001","1001","0110","0001"],"R":["110","101","110","101","101"],"S":["011","100","010","001","110"],"T":["111","010","010","010","010"],"U":["101","101","101","101","111"],"V":["101","101","101","101","010"],"W":["10001","10001","10101","11011","10001"],"X":["101","101","010","101","101"],"Y":["101","101","010","010","010"],"Z":["111","001","010","100","111"],"+":["000","010","111","010","000"],"-":["000","000","111","000","000"],"/":["001","001","010","100","100"],":":["0","1","0","1","0"],".":["0","0","0","0","1"],"!":["1","1","1","0","1"],"?":["110","001","010","000","010"],"%":["101","001","010","100","101"],"(":["01","10","10","10","01"],")":["10","01","01","01","10"],"[":["11","10","10","10","11"],"]":["11","01","01","01","11"],"'":["1","1","0","0","0"],",":["00","00","00","01","10"],"&":["010","101","010","101","011"]," ":["00","00","00","00","00"]},"SPRITE_COLORS":{"K":"#1f191d","S":"#6b747e","s":"#3d444d","H":"#9aa5ad","h":"#c4ccd1","W":"#8a563b","w":"#59382a","L":"#b57b52","B":"#c26444","b":"#8c4432","T":"#f0b562","t":"#d98f4e","P":"#e3d0ab","p":"#baa17c","R":"#d94c4c","r":"#9e2f3b","f":"#f2827f","G":"#5a8f45","g":"#3f6e39","M":"#8ac457","m":"#77ad4e","C":"#fff2cc","A":"#ffdf6b","a":"#fff6b8","V":"#465d73","I":"#446778","i":"#263847","J":"#7ec4cf","U":"#703d5e","N":"#1b3324","n":"#2e5736"},"SPRITES":{"keep":["......Krr.......","......KRRr......","......K.........","..KKK.K.KKK.KKK.","..KHK.K.KHK.KHK.","..KSHKKKSHKKKSHK","..KSSSSSSSHSSSSK","..KssHHSSSSHHssK",".KKSSSSsKKsSSSSK",".KHSSSHKVVKHSSSK",".KSSSSSKVVkSSSSK",".KSSssSKKKKSSssK",".KSHSSssssssSHSK",".KSSSSKWWWWKSSSK",".KssSSKWLLWKSSsK",".KGMSSKWwwWKSSGK","..KMssKWwwWKssK.","..KKKKKKKKKKKKK."],"cottage":["...........KK...","..........KBsK..","....KKKKKKKBBK..","...KTtTTTTTtBK..","..KTTtTTTTTtTBK.",".KTTtTTtTTTtTTBK","KTTTtTTtTTTtTTTK",".KbbKKKKKKKKbbK.",".KpPPPPPPPPPPpK.",".KpPPKVVKWWKpPK.",".KpPPKVVKWLKpPK.",".KppPKKKKWWKpPK.",".KGMpPPPPWWpMGK.","..KKKKKKKKKKKK.."],"grove":["....KKKK.KKK....","..KKGMmMKMmGK...",".KGMmRmmGMmRmK..",".KGmmmgGMmmmgGK.","KKGMfRmGmMRmMGKK","KGMmmmgmGMmmmgmK","KgMgmRggGmRmggGK","KgGggKKKKgggggGK",".KggKWWWWKGGGGK.","..KKKWLLWKKggKK.","....KWWWWK.KK...","....KKKKKK......"],"windmill":[".....KKKKKK.....","....KBBBBBBK....","...KBtTTTTtBK...","...KbbKKKKbbK...","...KpPPPPPPpK...","...KpPPKKPPpK...","..KKpPPKKPPpKK..","..KHSSPPPPSSHK..","..KSSSpPPpSSSK..","..KSSsPPPPssSK..","..KSHSSKKSSSHK..","..KSSSKWWKSSSK..",".KKssSKWLKSSsKK.",".KGMssKwwKssMGK.","..KKKKKKKKKKKK.."],"wall":[".KKK..KKKK..KKK.",".KHK..KHHK..KHK.","KKSHKKSHHSKKSHKK","KHHSSSSSSSSSSHHK","KSSssHHSSHHssSSK","KGMSSSSssSSSSMGK","KmmssSSSHSSssmmK","KSSssSSSSSSSSssK","KKKKKKKKKKKKKKKK"],"tower":[".......KRRrr....",".......KRrr.....",".......K........","...KKK.K.KKK....","...KHK.K.KHK....","..KKSHKKKSHKK...","..KWWWWWWWWWWK..","..KwwLLLLLLwwK..","...KKKSSSSKKK...","....KSHHHHSK....","....KSSKKSSK....","....KSSVVSSK....","....KSSVVSSK....","....KSSKKSSK....","....KSHSSHSK....","...KKSSssSSKK...","...KGMSSSSMGK...","...KKKKKKKKKK..."],"pine":[".....KK.....","....KmMK....","...KmMmMK...","..KKnMmNKK..","...KnmmnK...","..KnMmMmNK..",".KKnMmmmnKK.","..KnNmmNnK..",".KnMmNmmMNK.","KNNnNNNNnNNK",".KKKKWWKKKK.","....KwwK....","....KKKK...."],"rock":["....KKKK....","..KKHHSHKK..",".KHSSSHSSsK.",".KGMSSSSssK.","KGMmSSssSSsK","KggSSssssssK",".KKKKKKKKKK."],"skiff":["......KRK.....",".....KRRfK....",".....KRrK.....","......K.......",".KK...K....KK.","KWWKKKKKKKKWWK",".KLLWWiiWWLLK.","..KwwwwwwwwK..","...KKKKKKKK..."],"imp":[".KC...CK.",".KIK.KIK.",".KJJJJJK.","KJIAAAIJK","KIIIIIIIK",".KUUUUUK.",".KILWLIK.",".KIK.KIK.","..K...K.."],"brute":["..KC...CK..","..KIK.KIK..",".KSHHHHHsK.","KSJJAAAJJSK","KSSIIIIIISK","KssUUUUUssK",".KssWWWWsK.","..KIK.KIK..","..KKK.KKK.."],"crestBow":["....KKK.......","...KTttK..KK..","..KTK..KKKCK..",".KTK...KCCK...",".KTK..KCKKK...",".KTK.KCK..K...",".KTKKCK..KK...",".KCKCK..KTK...",".KKCK...KTK...","...K...KTK....","..KK..KTtK....",".KCKKKtKK.....",".KKKKKK......."],"crestBerry":[".....KKKK.....","...KKMmGMKK...","..KMMmGGmMMK..","..KGKRRRRKGK..","...KRRffRRK...","..KRRfRRRRRK..",".KRRRRffRRRRK.",".KRRrRRRRrRRK.",".KrrrRRRRrrrK.","..KrrrrrrrrK..","...KKKKKKKK..."],"crestWall":["..KKK.KKK.KKK.","..KHK.KHK.KHK.",".KKSHKSHHKSHKK",".KHHSSSSSSSSHK",".KSSssHHSSssSK",".KGMSSSSssSSGK",".KmmssSSHHssGK",".KSSssSSSSssSK",".KKKKKKKKKKKKK"],"crestLantern":[".....KKKK.....","....KWWWWK....","...KKAAAAKK...","..KWWaAAaWWK..","..KWWAaaAWWK..","..KWWaAAaWWK..","..KWWAAAAWWK..","...KKWWWWKK...","...KKKKKKKK...","....KwwwwK...."],"crestMill":["..KK......KK..",".KCCK....KCCK.","..KCCK..KCCK..","...KWWKKWWK...","....KWAAWK....","...KWWKKWWK...","..KCCK..KCCK..",".KCCK....KCCK.","..KK......KK.."],"crestHeart":["..KKK....KKK..",".KRffK..KRRRK.","KRffRRKKRRRRRK","KRfRRRRRRRRRRK","KRRRRRRRRRRRRK",".KRRRRRRRRrrK.","..KRRRRRRrrK..","...KRRRRrrK...","....KRRrrK....",".....KrrK.....","......KK......"],"crestCrown":[".K....KK....K.","KAK..KAAK..KAK","KAKK.KAAK.KKAK","KAAKKAAAAKKAAK","KAAARAAAARAAAK","KAAAAAAAAAAAAK","KTtTTTTTTTTtTK","KKKKKKKKKKKKKK"]}};
+    const { FULL_EDITION, PAL, FONT_MINI, SPRITE_COLORS, SPRITES } = DATA;
+
+    const W = 240;
+    const H = 135;
+    const GRID_COLS = 10;
+    const GRID_ROWS = 6;
+    const TILE_W = 16;
+    const TILE_H = 12;
+    const GRID_X = 40;
+    const GRID_Y = 30;
+
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+    ctx.imageSmoothingEnabled = false;
+
+    // ------------------------------------------------------------------------
+    // Cozy Procedural WebAudio SFX & Ambient Chiptune Loop
+    // ------------------------------------------------------------------------
+    let audioCtx = null;
+    let muted = false;
+    let musicStep = 0;
+    let musicTimer = 0;
+
+    function ensureAudio() {
+      if (muted) return null;
+      if (!audioCtx) {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (AC) audioCtx = new AC();
+      }
+      if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume().catch(() => {});
+      }
+      return audioCtx;
+    }
+
+    function playTone(freq, dur, type = 'triangle', vol = 0.08, slideTo = null) {
+      if (muted) return;
+      const ac = ensureAudio();
+      if (!ac) return;
+      const now = ac.currentTime;
+      const osc = ac.createOscillator();
+      const gain = ac.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, now);
+      if (slideTo) osc.frequency.exponentialRampToValueAtTime(Math.max(30, slideTo), now + dur);
+      gain.gain.setValueAtTime(0.001, now);
+      gain.gain.linearRampToValueAtTime(vol, now + 0.012);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + dur);
+      osc.connect(gain);
+      gain.connect(ac.destination);
+      osc.start(now);
+      osc.stop(now + dur + 0.02);
+    }
+
+    const SFX = {
+      build(kind) {
+        playTone(kind === 'wall' ? 120 : 165, 0.11, 'triangle', 0.14, 72);
+        setTimeout(() => playTone(kind === 'grove' ? 520 : 340, 0.07, 'sine', 0.06, 440), 22);
+      },
+      refund() {
+        playTone(320, 0.09, 'triangle', 0.08, 220);
+      },
+      nope() {
+        playTone(130, 0.09, 'square', 0.04, 95);
+      },
+      bell() {
+        playTone(440, 0.55, 'sine', 0.12);
+        playTone(660, 0.45, 'triangle', 0.07);
+        setTimeout(() => playTone(880, 0.5, 'sine', 0.05), 90);
+      },
+      arrow() {
+        playTone(540, 0.06, 'triangle', 0.045, 290);
+      },
+      hit() {
+        playTone(190, 0.06, 'square', 0.04, 85);
+      },
+      impDown() {
+        playTone(392, 0.08, 'triangle', 0.06, 587);
+      },
+      dawn() {
+        [392, 493.88, 587.33, 783.99].forEach((f, i) => {
+          setTimeout(() => playTone(f, 0.22, 'triangle', 0.08), i * 70);
+        });
+      },
+      decree() {
+        [523.25, 659.25, 783.99].forEach((f, i) => {
+          setTimeout(() => playTone(f, 0.18, 'sine', 0.08), i * 55);
+        });
+      }
+    };
+
+    const DAY_MELODY = [261.63, 329.63, 392.0, 0, 329.63, 293.66, 261.63, 0, 349.23, 392.0, 440.0, 0, 392.0, 329.63, 293.66, 0];
+    const DUSK_MELODY = [220.0, 261.63, 329.63, 0, 293.66, 246.94, 220.0, 0, 196.0, 246.94, 293.66, 0, 261.63, 220.0, 196.0, 0];
+
+    function stepMusic(dt) {
+      if (muted || !audioCtx || game.screen !== 'play') return;
+      musicTimer += dt;
+      if (musicTimer >= 0.34) {
+        musicTimer -= 0.34;
+        const seq = game.phase === 'dusk' ? DUSK_MELODY : DAY_MELODY;
+        const note = seq[musicStep % seq.length];
+        if (note > 0) playTone(note, 0.25, 'triangle', 0.025);
+        musicStep++;
+      }
+    }
+
+    // ------------------------------------------------------------------------
+    // Building, Island & Royal Decree Definitions
+    // ------------------------------------------------------------------------
+    const BUILDINGS = {
+      cottage: { id: 'cottage', name: 'COTTAGE', wood: 4, berry: 2, hp: 5, desc: '+2 WOOD, x2 ADJ GROVE' },
+      grove:   { id: 'grove',   name: 'GROVE',   wood: 3, berry: 1, hp: 4, desc: '+2 BERRY (x2 ADJ COTTAGE)' },
+      mill:    { id: 'mill',    name: 'MILL',    wood: 6, berry: 3, hp: 6, desc: '+1 WOOD, +2 TO ADJ GROVE' },
+      wall:    { id: 'wall',    name: 'WALL',    wood: 3, berry: 1, hp: 12, desc: 'BLOCKS SEA IMPS' },
+      tower:   { id: 'tower',   name: 'TOWER',   wood: 5, berry: 2, hp: 7, desc: 'FIRES ARROWS (3.5 TILES)' }
+    };
+
+    const ISLANDS = [
+      {
+        id: 'meadow',
+        name: 'MEADOW ISLE',
+        subtitle: 'LUSH GREEN SHORES',
+        locked: false,
+        keep: [4, 2],
+        grassA: PAL.meadowLit,
+        grassB: PAL.meadowMid,
+        grassTop: PAL.meadowTop,
+        duskA: PAL.meadowDark,
+        duskB: PAL.pineMid,
+        pines: [[0, 0], [9, 0], [0, 5], [9, 5]],
+        rocks: [[8, 1], [1, 4]],
+        waterTiles: []
+      },
+      {
+        id: 'autumn',
+        name: 'AUTUMN CRAG',
+        subtitle: 'AMBER CLIFF PASSES',
+        locked: !FULL_EDITION,
+        keep: [4, 2],
+        grassA: '#b58745',
+        grassB: '#996b38',
+        grassTop: '#cc9c54',
+        duskA: '#543c2e',
+        duskB: '#402c24',
+        pines: [[0, 0], [9, 5], [1, 1]],
+        rocks: [[2, 1], [7, 1], [2, 4], [7, 4]],
+        waterTiles: []
+      },
+      {
+        id: 'frost',
+        name: 'FROSTFJORD',
+        subtitle: 'SNOW-DUSTED FJORD',
+        locked: !FULL_EDITION,
+        keep: [4, 3],
+        grassA: '#8db3bd',
+        grassB: '#6d929e',
+        grassTop: '#b7d6de',
+        duskA: '#3e5466',
+        duskB: '#2e4052',
+        pines: [[0, 0], [9, 0], [0, 5], [9, 5], [1, 2]],
+        rocks: [[8, 4], [1, 4]],
+        waterTiles: [[4, 1], [5, 1]]
+      },
+      {
+        id: 'atoll',
+        name: 'SUNKEN ATOLL',
+        subtitle: 'TWIN TIDAL LAGOON',
+        locked: !FULL_EDITION,
+        keep: [4, 2],
+        grassA: '#8ac457',
+        grassB: '#6ca848',
+        grassTop: '#b6d973',
+        duskA: '#355c3c',
+        duskB: '#284732',
+        pines: [[0, 0], [9, 0]],
+        rocks: [[8, 4], [1, 1]],
+        waterTiles: [[0, 2], [9, 2], [4, 5], [5, 5]]
+      }
+    ];
+
+    const ALL_DECREES = [
+      { id: 'oak_fletching', crest: 'crestBow',     t1: 'OAK',      t2: 'FLETCHING', d1: '+1 ARROW', d2: 'DAMAGE',     apply: (b) => { b.arrowDmg += 1; } },
+      { id: 'sunlit_harvest',crest: 'crestBerry',   t1: 'SUNLIT',   t2: 'HARVEST',   d1: '+2 BERRY', d2: 'PER GROVE',  apply: (b) => { b.groveBonus += 2; } },
+      { id: 'mason_guild',   crest: 'crestWall',    t1: 'MASON',    t2: 'GUILD',     d1: '+6 WALL',  d2: 'MAX HP',     apply: (b) => { b.wallHp += 6; healAll('wall', 8); } },
+      { id: 'lantern_oil',   crest: 'crestLantern', t1: 'LANTERN',  t2: 'OIL',       d1: '+0.75',    d2: 'TOWER RNG',  apply: (b) => { b.towerRange += 0.75; } },
+      { id: 'twin_sails',    crest: 'crestMill',    t1: 'TWIN',     t2: 'SAILS',     d1: '+2 MILL',  d2: 'WOOD/FOOD',  apply: (b) => { b.millBonus += 2; } },
+      { id: 'cozy_hearth',   crest: 'crestHeart',   t1: 'COZY',     t2: 'HEARTH',    d1: '+2 WOOD &',d2: '+1 KEEP HP', apply: (b) => { b.cottageBonus += 2; b.dawnHeal += 1; } },
+      { id: 'eagle_volley',  crest: 'crestBow',     t1: 'EAGLE',    t2: 'VOLLEY',    d1: '+20% FIRE',d2: 'RATE',       apply: (b) => { b.fireRateMult *= 0.8; } },
+      { id: 'tide_watcher',  crest: 'crestWall',    t1: 'TIDE',     t2: 'WATCHER',   d1: 'IMPS DEAL',d2: '-1 DAMAGE',  apply: (b) => { b.damageReduce += 1; } },
+      // Full Edition extra 7 Royal Decrees
+      { id: 'royal_granary', crest: 'crestCrown',   t1: 'ROYAL',    t2: 'GRANARY',   d1: '+10 WOOD', d2: '+8 BERRY',   apply: (b) => { game.wood += 10; game.berries += 8; game.keepMaxHp += 2; game.keepHp = Math.min(game.keepMaxHp, game.keepHp + 2); } },
+      { id: 'flint_arrows',  crest: 'crestBow',     t1: 'FLINT',    t2: 'ARROWS',    d1: 'ARROWS',   d2: 'PIERCE +1',  apply: (b) => { b.arrowPierce += 1; } },
+      { id: 'thatch_guild',  crest: 'crestHeart',   t1: 'THATCH',   t2: 'GUILD',     d1: '-1 WOOD',  d2: 'BLDG COST',  apply: (b) => { b.costDiscount += 1; } },
+      { id: 'frost_arrows',  crest: 'crestLantern', t1: 'FROST',    t2: 'ARROWS',    d1: 'ARROWS',   d2: 'SLOW IMPS',  apply: (b) => { b.chillSec += 1.6; } },
+      { id: 'moss_bastion',  crest: 'crestCrown',   t1: 'MOSS',     t2: 'BASTION',   d1: 'KEEP RANGE',d2: 'TO 3.2',    apply: (b) => { b.keepRange = 3.2; b.keepDmg += 1; } },
+      { id: 'sea_bounty',    crest: 'crestBerry',   t1: 'SEA',      t2: 'BOUNTY',    d1: 'IMPS DROP',d2: '+1 LOOT',    apply: (b) => { b.impLoot += 1; } },
+      { id: 'golden_crown',  crest: 'crestCrown',   t1: 'GOLDEN',   t2: 'CROWN',     d1: '+1 ALL',   d2: 'OUTPUT',     apply: (b) => { b.allOutput += 1; } }
+    ];
+    const DECREE_POOL = FULL_EDITION ? ALL_DECREES : ALL_DECREES.slice(0, 8);
+
+    // ------------------------------------------------------------------------
+    // Pixel Drawing Primitives on 240x135 Canvas
+    // ------------------------------------------------------------------------
+    function rect(x, y, w, h, col) {
+      ctx.fillStyle = col;
+      ctx.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h));
+    }
+
+    function px(x, y, col) {
+      ctx.fillStyle = col;
+      ctx.fillRect(Math.round(x), Math.round(y), 1, 1);
+    }
+
+    function measureMini(text) {
+      const s = String(text || '').toUpperCase();
+      let w = 0;
+      for (let i = 0; i < s.length; i++) {
+        const g = FONT_MINI[s[i]] || FONT_MINI[' '];
+        w += g[0].length + (i < s.length - 1 ? 1 : 0);
+      }
+      return w;
+    }
+
+    function drawMini(x, y, text, fg, shadow = null, outline = null) {
+      const s = String(text || '').toUpperCase();
+      const plot = (ox, oy, col) => {
+        ctx.fillStyle = col;
+        let cx = Math.round(ox);
+        const cy = Math.round(oy);
+        for (let i = 0; i < s.length; i++) {
+          const g = FONT_MINI[s[i]] || FONT_MINI[' '];
+          const gw = g[0].length;
+          for (let r = 0; r < 5; r++) {
+            for (let c = 0; c < gw; c++) {
+              if (g[r][c] === '1') ctx.fillRect(cx + c, cy + r, 1, 1);
+            }
+          }
+          cx += gw + 1;
+        }
+      };
+      if (shadow) plot(x, y + 1, shadow);
+      if (outline) {
+        plot(x - 1, y, outline);
+        plot(x + 1, y, outline);
+        plot(x, y - 1, outline);
+        plot(x, y + 1, outline);
+      }
+      plot(x, y, fg);
+    }
+
+    function drawCenteredMini(cx, y, text, fg, shadow = null, outline = null) {
+      drawMini(Math.round(cx - measureMini(text) / 2), y, text, fg, shadow, outline);
+    }
+
+    function drawMatrix(x, y, rows, colors, flipX = false, flashWhite = false) {
+      const ox = Math.round(x);
+      const oy = Math.round(y);
+      for (let r = 0; r < rows.length; r++) {
+        const line = rows[r];
+        for (let c = 0; c < line.length; c++) {
+          const ch = line[flipX ? line.length - 1 - c : c];
+          if (ch === '.' || ch === ' ') continue;
+          const hex = flashWhite ? PAL.cream : colors[ch];
+          if (!hex) continue;
+          ctx.fillStyle = hex;
+          ctx.fillRect(ox + c, oy + r, 1, 1);
+        }
+      }
+    }
+
+    function drawSails(cx, cy, angle, frameCol = PAL.woodDark, clothCol = PAL.cream) {
+      for (let k = 0; k < 4; k++) {
+        const a = angle + k * (Math.PI / 2);
+        const cos = Math.cos(a);
+        const sin = Math.sin(a);
+        for (let i = 1; i <= 7; i++) {
+          const sx = Math.round(cx + cos * i);
+          const sy = Math.round(cy + sin * i);
+          px(sx, sy, frameCol);
+          if (i >= 2 && i <= 6) {
+            const nx = Math.round(sx - sin * 1.1);
+            const ny = Math.round(sy + cos * 1.1);
+            px(nx, ny, clothCol);
+          }
+        }
+      }
+      rect(cx, cy, 2, 2, PAL.amberGlow);
+    }
+
+    // ------------------------------------------------------------------------
+    // Game State & Grid Logic
+    // ------------------------------------------------------------------------
+    const game = {
+      screen: 'title', // 'title' | 'play' | 'decree' | 'gameover' | 'victory'
+      selectedIslandIdx: 0,
+      mode: 'campaign', // 'campaign' | 'endless' | 'peaceful'
+      phase: 'day', // 'day' | 'dusk' | 'dawn'
+      day: 1,
+      maxDays: FULL_EDITION ? 15 : 5,
+      wood: 12,
+      berries: 6,
+      pop: 1,
+      score: 0,
+      bestScore: Number(localStorage.getItem('mosshold_best') || 0),
+      keepHp: 10,
+      keepMaxHp: 10,
+      selectedTool: 'cottage', // 'cottage' | 'grove' | 'mill' | 'wall' | 'tower' | 'sell'
+      hoverTile: null,
+      duskBlend: 0,
+      duskSpeed: 1,
+      peacefulTimer: 0,
+      dawnTimer: 0,
+      time: 0,
+      grid: [],
+      skiffs: [],
+      imps: [],
+      arrows: [],
+      particles: [],
+      floats: [],
+      spawnQueue: [],
+      waveLanes: [],
+      decreeChoices: [],
+      ownedDecrees: [],
+      bonuses: null,
+      noticeText: '',
+      noticeTimer: 0
+    };
+
+    function resetBonuses() {
+      return {
+        arrowDmg: 2,
+        groveBonus: 0,
+        wallHp: 12,
+        towerRange: 3.5,
+        millBonus: 0,
+        cottageBonus: 0,
+        dawnHeal: 0,
+        fireRateMult: 1,
+        damageReduce: 0,
+        arrowPierce: 0,
+        costDiscount: 0,
+        chillSec: 0,
+        keepRange: 2.0,
+        keepDmg: 2,
+        impLoot: 0,
+        allOutput: 0
+      };
+    }
+
+    function currentIsland() {
+      return ISLANDS[game.selectedIslandIdx] || ISLANDS[0];
+    }
+
+    function isInside(c, r) {
+      return c >= 0 && c < GRID_COLS && r >= 0 && r < GRID_ROWS;
+    }
+
+    function getTile(c, r) {
+      return isInside(c, r) ? game.grid[r][c] : null;
+    }
+
+    function adjNeighbors(c, r) {
+      return [[c + 1, r], [c - 1, r], [c, r + 1], [c, r - 1]]
+        .filter(([nc, nr]) => isInside(nc, nr))
+        .map(([nc, nr]) => game.grid[nr][nc]);
+    }
+
+    function effectiveCost(kind) {
+      const def = BUILDINGS[kind];
+      const disc = game.bonuses ? game.bonuses.costDiscount : 0;
+      return {
+        wood: game.mode === 'peaceful' ? 0 : Math.max(1, def.wood - disc),
+        berry: game.mode === 'peaceful' ? 0 : def.berry
+      };
+    }
+
+    function rollWavePlan(dayNum) {
+      const lanes = [];
+      const sides = ['east', 'west', 'south', 'north'];
+      const laneCount = Math.min(4, 1 + Math.floor((dayNum + 1) / 3));
+      for (let i = 0; i < laneCount; i++) {
+        lanes.push(sides[(dayNum + i) % sides.length]);
+      }
+      game.waveLanes = lanes;
+      game.spawnQueue = [];
+      const totalImps = game.mode === 'peaceful' ? 0 : (3 + dayNum * 2 + Math.floor(dayNum / 3));
+      for (let i = 0; i < totalImps; i++) {
+        const lane = lanes[i % lanes.length];
+        const kind = (dayNum >= 4 && i % 4 === 3) ? 'brute' : 'imp';
+        game.spawnQueue.push({
+          delay: 0.4 + Math.floor(i / lanes.length) * 1.15,
+          lane,
+          kind
+        });
+      }
+    }
+
+    function startNewRun(islandIdx, mode) {
+      const isl = ISLANDS[islandIdx] || ISLANDS[0];
+      if (isl.locked) {
+        flashNotice('FULL EDITION UNLOCKS ALL 4 ISLANDS!');
+        SFX.nope();
+        return;
+      }
+      game.selectedIslandIdx = islandIdx;
+      game.mode = mode;
+      game.screen = 'play';
+      game.phase = 'day';
+      game.day = 1;
+      game.maxDays = FULL_EDITION ? 15 : 5;
+      game.wood = mode === 'peaceful' ? 99 : 12;
+      game.berries = mode === 'peaceful' ? 99 : 6;
+      game.pop = 1;
+      game.score = 0;
+      game.keepMaxHp = 10;
+      game.keepHp = 10;
+      game.selectedTool = 'cottage';
+      game.duskBlend = 0;
+      game.duskSpeed = 1;
+      game.skiffs = [];
+      game.imps = [];
+      game.arrows = [];
+      game.particles = [];
+      game.floats = [];
+      game.ownedDecrees = [];
+      game.bonuses = resetBonuses();
+
+      game.grid = [];
+      for (let r = 0; r < GRID_ROWS; r++) {
+        const row = [];
+        for (let c = 0; c < GRID_COLS; c++) {
+          row.push({ c, r, kind: 'empty', hp: 0, maxHp: 0, animT: 1, cd: 0, hitT: 0 });
+        }
+        game.grid.push(row);
+      }
+
+      const [kc, kr] = isl.keep;
+      game.grid[kr][kc] = { c: kc, r: kr, kind: 'keep', hp: 10, maxHp: 10, animT: 1, cd: 0, hitT: 0 };
+      for (const [pc, pr] of isl.pines) {
+        if (isInside(pc, pr) && !(pc === kc && pr === kr)) {
+          game.grid[pr][pc] = { c: pc, r: pr, kind: 'pine', hp: 2, maxHp: 2, animT: 1, cd: 0, hitT: 0 };
+        }
+      }
+      for (const [rc, rr] of isl.rocks) {
+        if (isInside(rc, rr) && !(rc === kc && rr === kr)) {
+          game.grid[rr][rc] = { c: rc, r: rr, kind: 'rock', hp: 99, maxHp: 99, animT: 1, cd: 0, hitT: 0 };
+        }
+      }
+      for (const [wc, wr] of isl.waterTiles) {
+        if (isInside(wc, wr)) {
+          game.grid[wr][wc] = { c: wc, r: wr, kind: 'water', hp: 0, maxHp: 0, animT: 1, cd: 0, hitT: 0 };
+        }
+      }
+
+      rollWavePlan(1);
+      flashNotice(mode === 'peaceful' ? 'PEACEFUL DIORAMA: BUILD FREELY!' : 'DAY 1: BUILD BEFORE DUSK!');
+    }
+
+    function flashNotice(msg) {
+      game.noticeText = msg;
+      game.noticeTimer = 2.6;
+    }
+
+    function spawnParticles(x, y, col, count = 6, speed = 22) {
+      for (let i = 0; i < count; i++) {
+        const ang = (Math.PI * 2 * i) / count + Math.random() * 0.6;
+        const sp = speed * (0.5 + Math.random() * 0.7);
+        game.particles.push({
+          x, y,
+          vx: Math.cos(ang) * sp,
+          vy: Math.sin(ang) * sp - 10,
+          life: 0.35 + Math.random() * 0.25,
+          maxLife: 0.6,
+          col
+        });
+      }
+    }
+
+    function addFloat(x, y, text, col = PAL.cream) {
+      game.floats.push({ x, y, text, col, life: 1.15 });
+    }
+
+    function computeTileIncome(tile) {
+      const b = game.bonuses;
+      const neigh = adjNeighbors(tile.c, tile.r);
+      if (tile.kind === 'keep') {
+        return { wood: 2 + b.allOutput, berry: 2 + b.allOutput };
+      }
+      if (tile.kind === 'cottage') {
+        return { wood: 2 + b.cottageBonus + b.allOutput, berry: 0 };
+      }
+      if (tile.kind === 'grove') {
+        const hasCottage = neigh.some((n) => n.kind === 'cottage');
+        const mills = neigh.filter((n) => n.kind === 'mill').length;
+        const base = (2 + b.groveBonus) * (hasCottage ? 2 : 1) + mills * (2 + b.millBonus) + b.allOutput;
+        return { wood: 0, berry: base };
+      }
+      if (tile.kind === 'mill') {
+        return { wood: 1 + b.millBonus + b.allOutput, berry: 0 };
+      }
+      return { wood: 0, berry: 0 };
+    }
+
+    function updatePopCount() {
+      let pop = 1;
+      for (let r = 0; r < GRID_ROWS; r++) {
+        for (let c = 0; c < GRID_COLS; c++) {
+          if (game.grid[r][c].kind === 'cottage') pop += 1;
+        }
+      }
+      game.pop = pop;
+    }
+
+    function placeBuilding(c, r) {
+      const tile = getTile(c, r);
+      if (!tile) return;
+
+      if (game.selectedTool === 'sell') {
+        refundOrChopTile(c, r);
+        return;
+      }
+
+      if (tile.kind !== 'empty') {
+        SFX.nope();
+        flashNotice(tile.kind === 'pine' ? 'RIGHT-CLICK PINE TO CLEAR (+2W)' : 'TILE OCCUPIED');
+        return;
+      }
+
+      const cost = effectiveCost(game.selectedTool);
+      if (game.wood < cost.wood || game.berries < cost.berry) {
+        SFX.nope();
+        flashNotice('NEED ' + cost.wood + ' WOOD & ' + cost.berry + ' BERRY');
+        return;
+      }
+
+      game.wood -= cost.wood;
+      game.berries -= cost.berry;
+      const def = BUILDINGS[game.selectedTool];
+      const maxHp = game.selectedTool === 'wall' ? game.bonuses.wallHp : def.hp;
+      game.grid[r][c] = { c, r, kind: game.selectedTool, hp: maxHp, maxHp, animT: 0, cd: 0, hitT: 0 };
+      updatePopCount();
+
+      const cx = GRID_X + c * TILE_W + 8;
+      const cy = GRID_Y + r * TILE_H + 6;
+      spawnParticles(cx, cy, PAL.cream, 5, 18);
+      spawnParticles(cx, cy, PAL.meadowTop, 4, 15);
+      SFX.build(game.selectedTool);
+
+      const inc = computeTileIncome(game.grid[r][c]);
+      if (game.selectedTool === 'grove' && inc.berry >= 4) {
+        addFloat(cx, cy - 6, 'COZY x2!', PAL.amberGlow);
+      }
+    }
+
+    function refundOrChopTile(c, r) {
+      const tile = getTile(c, r);
+      if (!tile) return;
+      const cx = GRID_X + c * TILE_W + 8;
+      const cy = GRID_Y + r * TILE_H + 6;
+
+      if (tile.kind === 'pine') {
+        game.grid[r][c] = { c, r, kind: 'empty', hp: 0, maxHp: 0, animT: 1, cd: 0, hitT: 0 };
+        game.wood += 2;
+        spawnParticles(cx, cy, PAL.meadowLit, 6, 20);
+        addFloat(cx, cy - 5, '+2W', PAL.thatchLit);
+        SFX.build('grove');
+        return;
+      }
+
+      if (!BUILDINGS[tile.kind]) {
+        SFX.nope();
+        return;
+      }
+
+      const cost = effectiveCost(tile.kind);
+      const rw = Math.max(1, Math.floor(cost.wood * 0.75));
+      const rb = Math.floor(cost.berry * 0.75);
+      game.wood += rw;
+      game.berries += rb;
+      game.grid[r][c] = { c, r, kind: 'empty', hp: 0, maxHp: 0, animT: 1, cd: 0, hitT: 0 };
+      updatePopCount();
+      spawnParticles(cx, cy, PAL.parchmentLit, 5, 16);
+      addFloat(cx, cy - 5, '+' + rw + 'W', PAL.cream);
+      SFX.refund();
+    }
+
+    // ------------------------------------------------------------------------
+    // Dusk Wave Combat & BFS Pathfinding
+    // ------------------------------------------------------------------------
+    function beginDusk() {
+      if (game.screen !== 'play' || game.phase !== 'day') return;
+      game.phase = 'dusk';
+      game.duskSpeed = 1;
+      game.peacefulTimer = 6.0;
+      game.spawnElapsed = 0;
+      SFX.bell();
+      flashNotice(game.mode === 'peaceful' ? 'LANTERN DUSK...' : 'DUSK FALLS! DEFEND THE KEEP!');
+    }
+
+    function findNextStep(sc, sr) {
+      const [kc, kr] = currentIsland().keep;
+      const dist = Array.from({ length: GRID_ROWS }, () => Array(GRID_COLS).fill(1e9));
+      const nextHop = Array.from({ length: GRID_ROWS }, () => Array(GRID_COLS).fill(null));
+      const queue = [{ c: kc, r: kr, cost: 0 }];
+      dist[kr][kc] = 0;
+
+      while (queue.length) {
+        queue.sort((a, b) => a.cost - b.cost);
+        const cur = queue.shift();
+        if (cur.cost > dist[cur.r][cur.c]) continue;
+        for (const [nc, nr] of [[cur.c + 1, cur.r], [cur.c - 1, cur.r], [cur.c, cur.r + 1], [cur.c, cur.r - 1]]) {
+          if (!isInside(nc, nr)) continue;
+          const t = game.grid[nr][nc];
+          if (t.kind === 'rock' || t.kind === 'water') continue;
+          let stepCost = 1;
+          if (t.kind === 'wall') stepCost = 11;
+          else if (t.kind === 'pine') stepCost = 4;
+          else if (BUILDINGS[t.kind]) stepCost = 3;
+          const nd = cur.cost + stepCost;
+          if (nd < dist[nr][nc]) {
+            dist[nr][nc] = nd;
+            nextHop[nr][nc] = [cur.c, cur.r];
+            queue.push({ c: nc, r: nr, cost: nd });
+          }
+        }
+      }
+      return nextHop[sr] && nextHop[sr][sc] ? nextHop[sr][sc] : [kc, kr];
+    }
+
+    function spawnSkiffForImp(item) {
+      const isl = currentIsland();
+      let c = 0, r = 0, sx = 0, sy = 0;
+      if (item.lane === 'east') {
+        c = GRID_COLS - 1;
+        r = 1 + Math.floor(Math.random() * (GRID_ROWS - 2));
+        sx = W + 10;
+        sy = GRID_Y + r * TILE_H + 2;
+      } else if (item.lane === 'west') {
+        c = 0;
+        r = 1 + Math.floor(Math.random() * (GRID_ROWS - 2));
+        sx = -18;
+        sy = GRID_Y + r * TILE_H + 2;
+      } else if (item.lane === 'south') {
+        c = 2 + Math.floor(Math.random() * (GRID_COLS - 4));
+        r = GRID_ROWS - 1;
+        sx = GRID_X + c * TILE_W;
+        sy = 116;
+      } else {
+        c = 2 + Math.floor(Math.random() * (GRID_COLS - 4));
+        r = 0;
+        sx = GRID_X + c * TILE_W;
+        sy = 18;
+      }
+      // Avoid impassable rock/water landing
+      if (game.grid[r][c].kind === 'rock' || game.grid[r][c].kind === 'water') {
+        c = isl.keep[0];
+        r = item.lane === 'north' ? 0 : GRID_ROWS - 1;
+      }
+      const tx = GRID_X + c * TILE_W + (item.lane === 'east' ? 10 : item.lane === 'west' ? -4 : 3);
+      const ty = GRID_Y + r * TILE_H + 2;
+
+      game.skiffs.push({
+        x: sx, y: sy, tx, ty,
+        landC: c, landR: r,
+        kind: item.kind,
+        flip: item.lane === 'west',
+        life: 0,
+        dropped: false
+      });
+    }
+
+    function spawnLandedImp(c, r, kind) {
+      const hp = kind === 'brute' ? 7 + Math.floor(game.day / 2) : 3 + Math.floor(game.day / 3);
+      game.imps.push({
+        kind,
+        x: GRID_X + c * TILE_W + 8,
+        y: GRID_Y + r * TILE_H + 6,
+        c, r,
+        hp, maxHp: hp,
+        speed: kind === 'brute' ? 11 : 17,
+        atkCd: 0.4,
+        hitT: 0,
+        chillT: 0,
+        flip: c < currentIsland().keep[0]
+      });
+    }
+
+    function damageImp(imp, dmg, fromX) {
+      imp.hp -= dmg;
+      imp.hitT = 0.1;
+      if (game.bonuses.chillSec > 0) imp.chillT = game.bonuses.chillSec;
+      const knock = imp.x >= fromX ? 2 : -2;
+      imp.x = Math.max(GRID_X, Math.min(GRID_X + GRID_COLS * TILE_W, imp.x + knock));
+      spawnParticles(imp.x, imp.y - 2, PAL.amberGlow, 5, 22);
+      SFX.hit();
+
+      if (imp.hp <= 0) {
+        game.score += imp.kind === 'brute' ? 35 : 15;
+        spawnParticles(imp.x, imp.y - 2, PAL.seaCrest, 7, 24);
+        SFX.impDown();
+        if (game.bonuses.impLoot > 0 || Math.random() < 0.25) {
+          const gain = 1 + game.bonuses.impLoot;
+          if (Math.random() < 0.5) {
+            game.wood += gain;
+            addFloat(imp.x, imp.y - 6, '+' + gain + 'W', PAL.thatchLit);
+          } else {
+            game.berries += gain;
+            addFloat(imp.x, imp.y - 6, '+' + gain + 'B', PAL.berryLit);
+          }
+        }
+      }
+    }
+
+    function fireArrow(sx, sy, targetImp, dmg) {
+      game.arrows.push({
+        x0: sx, y0: sy,
+        x: sx, y: sy,
+        tx: targetImp.x, ty: targetImp.y - 3,
+        target: targetImp,
+        t: 0,
+        dur: 0.28,
+        dmg,
+        pierceLeft: game.bonuses.arrowPierce
+      });
+      SFX.arrow();
+    }
+
+    function updateDusk(dt) {
+      const simDt = dt * game.duskSpeed;
+      game.duskBlend = Math.min(1, game.duskBlend + dt * 1.4);
+
+      if (game.mode === 'peaceful') {
+        game.peacefulTimer -= simDt;
+        if (game.peacefulTimer <= 0) triggerDawnHarvest();
+        return;
+      }
+
+      game.spawnElapsed += simDt;
+      while (game.spawnQueue.length && game.spawnQueue[0].delay <= game.spawnElapsed) {
+        spawnSkiffForImp(game.spawnQueue.shift());
+      }
+
+      // Update Skiffs
+      for (let i = game.skiffs.length - 1; i >= 0; i--) {
+        const s = game.skiffs[i];
+        s.life += simDt;
+        if (!s.dropped) {
+          const dx = s.tx - s.x;
+          const dy = s.ty - s.y;
+          const dist = Math.hypot(dx, dy);
+          if (dist < 2) {
+            s.dropped = true;
+            spawnLandedImp(s.landC, s.landR, s.kind);
+            spawnParticles(s.x + 6, s.y + 6, PAL.seaCrest, 4, 15);
+          } else {
+            const spd = 28 * simDt;
+            s.x += (dx / dist) * spd;
+            s.y += (dy / dist) * spd;
+          }
+        } else {
+          s.x += (s.flip ? -14 : 14) * simDt;
+          if (s.life > 4.5 || s.x < -25 || s.x > W + 25) game.skiffs.splice(i, 1);
+        }
+      }
+
+      // Towers & Keep auto-fire
+      for (let r = 0; r < GRID_ROWS; r++) {
+        for (let c = 0; c < GRID_COLS; c++) {
+          const t = game.grid[r][c];
+          if (t.hitT > 0) t.hitT = Math.max(0, t.hitT - simDt);
+          if (t.kind !== 'tower' && t.kind !== 'keep') continue;
+          t.cd -= simDt;
+          if (t.cd > 0 || !game.imps.length) continue;
+
+          const rngPx = (t.kind === 'tower' ? game.bonuses.towerRange : game.bonuses.keepRange) * TILE_W;
+          const tx = GRID_X + c * TILE_W + 8;
+          const ty = GRID_Y + r * TILE_H - (t.kind === 'tower' ? 6 : 2);
+          let best = null, bestD = 1e9;
+          for (const imp of game.imps) {
+            if (imp.hp <= 0) continue;
+            const d = Math.hypot(imp.x - tx, imp.y - ty);
+            if (d <= rngPx && d < bestD) { best = imp; bestD = d; }
+          }
+          if (best) {
+            const dmg = t.kind === 'tower' ? game.bonuses.arrowDmg : game.bonuses.keepDmg;
+            fireArrow(tx, ty, best, dmg);
+            t.cd = (t.kind === 'tower' ? 1.15 : 1.55) * game.bonuses.fireRateMult;
+          }
+        }
+      }
+
+      // Update Arrows
+      for (let i = game.arrows.length - 1; i >= 0; i--) {
+        const a = game.arrows[i];
+        a.t += simDt / a.dur;
+        if (a.target && a.target.hp > 0) {
+          a.tx = a.target.x;
+          a.ty = a.target.y - 3;
+        }
+        const u = Math.min(1, a.t);
+        a.x = a.x0 + (a.tx - a.x0) * u;
+        a.y = a.y0 + (a.ty - a.y0) * u - 14 * 4 * u * (1 - u) * 0.45;
+        if (a.t >= 1) {
+          if (a.target && a.target.hp > 0) {
+            damageImp(a.target, a.dmg, a.x0);
+          } else {
+            // Splash check nearby
+            const near = game.imps.find((m) => m.hp > 0 && Math.hypot(m.x - a.tx, m.y - a.ty) < 12);
+            if (near) damageImp(near, a.dmg, a.x0);
+          }
+          if (a.pierceLeft > 0) {
+            const extra = game.imps.find((m) => m.hp > 0 && m !== a.target && Math.hypot(m.x - a.tx, m.y - a.ty) < 20);
+            if (extra) damageImp(extra, Math.max(1, a.dmg - 1), a.x0);
+          }
+          game.arrows.splice(i, 1);
+        }
+      }
+
+      // Update Landed Imps
+      const [kc, kr] = currentIsland().keep;
+      for (let i = game.imps.length - 1; i >= 0; i--) {
+        const imp = game.imps[i];
+        if (imp.hp <= 0) { game.imps.splice(i, 1); continue; }
+        if (imp.hitT > 0) imp.hitT = Math.max(0, imp.hitT - simDt);
+        if (imp.chillT > 0) imp.chillT = Math.max(0, imp.chillT - simDt);
+        imp.atkCd = Math.max(0, imp.atkCd - simDt);
+
+        const curC = Math.max(0, Math.min(GRID_COLS - 1, Math.floor((imp.x - GRID_X) / TILE_W)));
+        const curR = Math.max(0, Math.min(GRID_ROWS - 1, Math.floor((imp.y - GRID_Y) / TILE_H)));
+        imp.c = curC;
+        imp.r = curR;
+
+        // Check if adjacent/on Keep or facing a blocking Wall
+        const [nc, nr] = findNextStep(curC, curR);
+        const nextTile = getTile(nc, nr);
+        const keepTile = game.grid[kr][kc];
+        const distKeep = Math.abs(curC - kc) + Math.abs(curR - kr);
+
+        let attackTarget = null;
+        if (distKeep === 0) attackTarget = keepTile;
+        else if (nextTile && (nextTile.kind === 'wall' || nextTile.kind === 'keep')) attackTarget = nextTile;
+
+        if (attackTarget) {
+          const tx = GRID_X + attackTarget.c * TILE_W + 8;
+          const ty = GRID_Y + attackTarget.r * TILE_H + 6;
+          const d = Math.hypot(tx - imp.x, ty - imp.y);
+          if (d > 9) {
+            const spd = imp.speed * (imp.chillT > 0 ? 0.55 : 1) * simDt;
+            imp.x += ((tx - imp.x) / d) * spd;
+            imp.y += ((ty - imp.y) / d) * spd;
+            imp.flip = tx > imp.x;
+          } else if (imp.atkCd <= 0) {
+            const rawDmg = imp.kind === 'brute' ? 2 : 1;
+            const dmg = Math.max(0, rawDmg - game.bonuses.damageReduce);
+            if (dmg > 0) {
+              if (attackTarget.kind === 'keep') {
+                game.keepHp = Math.max(0, game.keepHp - dmg);
+                attackTarget.hitT = 0.14;
+                spawnParticles(tx, ty - 4, PAL.berryRed, 5, 18);
+              } else {
+                attackTarget.hp -= dmg;
+                attackTarget.hitT = 0.14;
+                spawnParticles(tx, ty - 2, PAL.stoneLit, 4, 16);
+                if (attackTarget.hp <= 0) {
+                  game.grid[attackTarget.r][attackTarget.c] = {
+                    c: attackTarget.c, r: attackTarget.r, kind: 'empty', hp: 0, maxHp: 0, animT: 1, cd: 0, hitT: 0
+                  };
+                }
+              }
+              SFX.hit();
+            }
+            imp.atkCd = 1.0;
+          }
+        } else {
+          const tx = GRID_X + nc * TILE_W + 8;
+          const ty = GRID_Y + nr * TILE_H + 6;
+          const dx = tx - imp.x;
+          const dy = ty - imp.y;
+          const d = Math.hypot(dx, dy) || 1;
+          const spd = imp.speed * (imp.chillT > 0 ? 0.55 : 1) * simDt;
+          imp.x += (dx / d) * spd;
+          imp.y += (dy / d) * spd;
+          imp.flip = dx > 0;
+        }
+      }
+
+      if (game.keepHp <= 0) {
+        saveBestScore();
+        game.screen = 'gameover';
+        return;
+      }
+
+      if (!game.spawnQueue.length && !game.skiffs.length && !game.imps.length) {
+        triggerDawnHarvest();
+      }
+    }
+
+    function saveBestScore() {
+      if (game.score > game.bestScore) {
+        game.bestScore = game.score;
+        try { localStorage.setItem('mosshold_best', String(game.bestScore)); } catch {}
+      }
+    }
+
+    function triggerDawnHarvest() {
+      game.phase = 'dawn';
+      game.dawnTimer = 1.3;
+      let totalW = 0, totalB = 0;
+
+      for (let r = 0; r < GRID_ROWS; r++) {
+        for (let c = 0; c < GRID_COLS; c++) {
+          const t = game.grid[r][c];
+          if (t.kind === 'wall' && game.ownedDecrees.includes('mason_guild')) {
+            t.hp = t.maxHp;
+          } else if (BUILDINGS[t.kind]) {
+            t.hp = Math.min(t.maxHp, t.hp + 1);
+          }
+          const inc = computeTileIncome(t);
+          totalW += inc.wood;
+          totalB += inc.berry;
+          const cx = GRID_X + c * TILE_W + 8;
+          const cy = GRID_Y + r * TILE_H;
+          if (inc.wood > 0) addFloat(cx - 2, cy, '+' + inc.wood + 'W', PAL.thatchLit);
+          if (inc.berry > 0) addFloat(cx + 2, cy - 4, '+' + inc.berry + 'B', PAL.berryLit);
+        }
+      }
+
+      if (game.mode === 'peaceful') {
+        game.wood = 99;
+        game.berries = 99;
+      } else {
+        game.wood += totalW;
+        game.berries += totalB;
+      }
+      if (game.bonuses.dawnHeal > 0) {
+        game.keepHp = Math.min(game.keepMaxHp, game.keepHp + game.bonuses.dawnHeal);
+      }
+      game.score += 50 * game.day;
+      saveBestScore();
+      SFX.dawn();
+    }
+
+    function openDecreeOrAdvanceDay() {
+      if (game.mode === 'campaign' && game.day >= game.maxDays) {
+        game.score += game.keepHp * 30 + game.pop * 25;
+        saveBestScore();
+        game.screen = 'victory';
+        return;
+      }
+
+      // Pick 3 random Royal Decrees
+      const available = DECREE_POOL.filter((d) => !game.ownedDecrees.includes(d.id));
+      const pool = available.length >= 3 ? available : DECREE_POOL;
+      const copy = [...pool];
+      for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      game.decreeChoices = copy.slice(0, 3);
+      game.screen = 'decree';
+    }
+
+    function healAll(kind, amount) {
+      for (let r = 0; r < GRID_ROWS; r++) {
+        for (let c = 0; c < GRID_COLS; c++) {
+          const t = game.grid[r][c];
+          if (t.kind === kind) {
+            if (kind === 'wall') t.maxHp = game.bonuses.wallHp;
+            t.hp = Math.min(t.maxHp, t.hp + amount);
+          }
+        }
+      }
+    }
+
+    function pickDecree(idx) {
+      const dec = game.decreeChoices[idx];
+      if (!dec) return;
+      game.ownedDecrees.push(dec.id);
+      dec.apply(game.bonuses);
+      SFX.decree();
+      game.day += 1;
+      game.phase = 'day';
+      game.duskBlend = 0;
+      game.screen = 'play';
+      rollWavePlan(game.day);
+      flashNotice(dec.t1 + ' ' + dec.t2 + ' ACTIVE!');
+    }
+
+    // ------------------------------------------------------------------------
+    // Rendering Loop
+    // ------------------------------------------------------------------------
+    function lerpColor(hexA, hexB, t) {
+      if (t <= 0) return hexA;
+      if (t >= 1) return hexB;
+      const pa = parseInt(hexA.slice(1), 16);
+      const pb = parseInt(hexB.slice(1), 16);
+      const r = Math.round(((pa >> 16) & 255) * (1 - t) + ((pb >> 16) & 255) * t);
+      const g = Math.round(((pa >> 8) & 255) * (1 - t) + ((pb >> 8) & 255) * t);
+      const b = Math.round((pa & 255) * (1 - t) + (pb & 255) * t);
+      return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+    }
+
+    function renderWorld() {
+      const isl = currentIsland();
+      const db = game.duskBlend;
+
+      // Sky
+      const skyA = lerpColor(PAL.skyDeep, PAL.duskDeep, db);
+      const skyB = lerpColor(PAL.skyMid, PAL.duskMid, db);
+      rect(0, 14, W, 8, skyA);
+      rect(0, 22, W, 7, skyB);
+
+      if (db > 0.4) {
+        for (const [sx, sy] of [[18, 17], [56, 16], [92, 18], [148, 16], [190, 18], [224, 17]]) {
+          px(sx, sy, PAL.cream);
+        }
+        ctx.fillStyle = PAL.amberGlow;
+        ctx.fillRect(204, 17, 5, 5);
+        ctx.fillStyle = skyA;
+        ctx.fillRect(206, 17, 4, 4);
+      } else {
+        const drift = Math.floor(game.time * 4) % 240;
+        const cx1 = (24 + drift) % 240;
+        const cx2 = (144 + drift) % 240;
+        rect(cx1, 16, 16, 4, PAL.cloudMist);
+        rect(cx1 + 3, 15, 9, 3, PAL.cream);
+        rect(cx2, 18, 18, 3, PAL.cloudMist);
+      }
+
+      // Sea
+      const seaTop = lerpColor(PAL.seaMid, PAL.duskSeaMid, db);
+      const seaBot = lerpColor(PAL.seaDeep, PAL.duskSeaDeep, db);
+      const seaFoam = lerpColor(PAL.seaFoam, PAL.duskSeaFoam, db);
+      rect(0, 26, W, 20, seaTop);
+      rect(0, 46, W, 68, seaBot);
+
+      // Animated lapping waves
+      const waveOff = Math.floor(game.time * 5);
+      for (let i = 0; i < 24; i++) {
+        const wx = (i * 29 + (i % 2 ? waveOff : -waveOff) + 240) % 232;
+        const wy = 29 + ((i * 19) % 78);
+        if (wx > GRID_X - 8 && wx < GRID_X + GRID_COLS * TILE_W + 2 && wy > GRID_Y - 4 && wy < GRID_Y + GRID_ROWS * TILE_H + 6) continue;
+        rect(wx, wy, 5 + (i % 3), 1, seaFoam);
+      }
+
+      // Shoreline foam & cliff rim
+      rect(GRID_X - 3, GRID_Y - 2, GRID_COLS * TILE_W + 6, GRID_ROWS * TILE_H + 9, seaFoam);
+      rect(GRID_X - 1, GRID_Y + GRID_ROWS * TILE_H, GRID_COLS * TILE_W + 2, 5, PAL.stoneDeep);
+      for (let x = GRID_X; x < GRID_X + GRID_COLS * TILE_W; x += 4) {
+        rect(x, GRID_Y + GRID_ROWS * TILE_H + 1, 2, 3, PAL.stoneMid);
+      }
+
+      // 10x6 Tiles
+      for (let r = 0; r < GRID_ROWS; r++) {
+        for (let c = 0; c < GRID_COLS; c++) {
+          const tile = game.grid[r][c];
+          const tx = GRID_X + c * TILE_W;
+          const ty = GRID_Y + r * TILE_H;
+          if (tile.kind === 'water') {
+            rect(tx, ty, TILE_W, TILE_H, seaTop);
+            rect(tx + 3, ty + 4 + ((Math.floor(game.time * 2) + c) % 2), 6, 1, seaFoam);
+          } else {
+            const checker = (r + c) % 2 === 0;
+            const colDay = checker ? isl.grassA : isl.grassB;
+            const colDusk = checker ? isl.duskA : isl.duskB;
+            rect(tx, ty, TILE_W, TILE_H, lerpColor(colDay, colDusk, db));
+            if (db < 0.6) rect(tx, ty, TILE_W, 1, isl.grassTop);
+          }
+        }
+      }
+
+      // Wave lane markers during Day
+      if (game.screen === 'play' && game.phase === 'day' && game.mode !== 'peaceful') {
+        const bob = Math.round(Math.sin(game.time * 4));
+        for (const lane of game.waveLanes) {
+          let lx = 212, ly = 64;
+          if (lane === 'west') { lx = 16; ly = 64; }
+          if (lane === 'north') { lx = 115; ly = 18; }
+          if (lane === 'south') { lx = 115; ly = 104; }
+          rect(lx, ly + bob, 10, 6, PAL.berryDark);
+          rect(lx + 1, ly + 1 + bob, 8, 4, PAL.berryRed);
+          drawMini(lx + 4, ly + 1 + bob, '!', PAL.cream);
+        }
+      }
+
+      // Buildings sorted top-to-bottom
+      const spriteCols = db > 0.45 ? { ...SPRITE_COLORS, V: PAL.amberGlow } : SPRITE_COLORS;
+      const sailAng = game.time * 2.1;
+      for (let r = 0; r < GRID_ROWS; r++) {
+        for (let c = 0; c < GRID_COLS; c++) {
+          const t = game.grid[r][c];
+          if (t.kind === 'empty' || t.kind === 'water') continue;
+          const sprKey = t.kind === 'mill' ? 'windmill' : t.kind;
+          const spr = SPRITES[sprKey];
+          if (!spr) continue;
+          const tx = GRID_X + c * TILE_W;
+          const ty = GRID_Y + r * TILE_H;
+          if (db > 0.45 && (t.kind === 'cottage' || t.kind === 'keep' || t.kind === 'tower')) {
+            rect(tx + 3, ty + TILE_H - 3, 10, 2, PAL.thatchMid);
+          }
+
+          // Squash-and-stretch spring offset
+          let squashY = 0;
+          if (t.animT < 1) {
+            squashY = Math.round(Math.sin(t.animT * Math.PI) * -3);
+          }
+          const sx = tx + Math.round((TILE_W - spr[0].length) / 2);
+          const sy = ty + TILE_H - spr.length + squashY;
+          drawMatrix(sx, sy, spr, spriteCols, false, t.hitT > 0);
+
+          if (t.kind === 'mill') {
+            drawSails(sx + 8, sy + 5, sailAng);
+          }
+          if (t.kind === 'cottage') {
+            const puff = Math.floor(game.time * 3 + c) % 4;
+            px(sx + 11, sy - 1 - puff, PAL.cloudMist);
+            if (puff > 0) px(sx + 12, sy - 2 - puff, PAL.cream);
+          }
+          if (t.kind === 'wall' && t.hp < t.maxHp) {
+            rect(tx + 2, ty + TILE_H - 2, 12, 2, PAL.ink);
+            rect(tx + 2, ty + TILE_H - 2, Math.max(1, Math.round((t.hp / t.maxHp) * 12)), 1, PAL.meadowLit);
+          }
+        }
+      }
+
+      // Hover Tile Preview & Range/Synergy Feedback during Day
+      if (game.screen === 'play' && game.phase === 'day' && game.hoverTile) {
+        const { c, r } = game.hoverTile;
+        const tile = getTile(c, r);
+        const htx = GRID_X + c * TILE_W;
+        const hty = GRID_Y + r * TILE_H;
+
+        if (game.selectedTool === 'sell') {
+          rect(htx, hty, TILE_W, 1, PAL.berryRed);
+          rect(htx, hty + TILE_H - 1, TILE_W, 1, PAL.berryRed);
+          rect(htx, hty, 1, TILE_H, PAL.berryRed);
+          rect(htx + TILE_W - 1, hty, 1, TILE_H, PAL.berryRed);
+        } else if (tile && tile.kind === 'empty') {
+          const cost = effectiveCost(game.selectedTool);
+          const canAfford = game.wood >= cost.wood && game.berries >= cost.berry;
+          const borderCol = canAfford ? PAL.amberGlow : PAL.berryRed;
+          rect(htx, hty, TILE_W, 1, borderCol);
+          rect(htx, hty + TILE_H - 1, TILE_W, 1, borderCol);
+          rect(htx, hty, 1, TILE_H, borderCol);
+          rect(htx + TILE_W - 1, hty, 1, TILE_H, borderCol);
+
+          const previewKey = game.selectedTool === 'mill' ? 'windmill' : game.selectedTool;
+          const spr = SPRITES[previewKey];
+          if (spr) {
+            ctx.globalAlpha = 0.65;
+            drawMatrix(htx + Math.round((TILE_W - spr[0].length) / 2), hty + TILE_H - spr.length, spr, SPRITE_COLORS);
+            ctx.globalAlpha = 1;
+          }
+
+          if (game.selectedTool === 'tower') {
+            const rad = game.bonuses.towerRange * TILE_W;
+            const cx = htx + 8;
+            const cy = hty + 6;
+            for (let a = 0; a < 36; a++) {
+              const ang = (a / 36) * Math.PI * 2 + game.time * 0.6;
+              const rx = Math.round(cx + Math.cos(ang) * rad);
+              const ry = Math.round(cy + Math.sin(ang) * rad * 0.78);
+              if (ry >= 14 && ry < 113) px(rx, ry, a % 2 === 0 ? PAL.amberGlow : PAL.cream);
+            }
+          }
+
+          if (game.selectedTool === 'grove') {
+            const neigh = adjNeighbors(c, r);
+            const hasCot = neigh.some((n) => n.kind === 'cottage');
+            const mills = neigh.filter((n) => n.kind === 'mill').length;
+            const totalB = (2 + game.bonuses.groveBonus) * (hasCot ? 2 : 1) + mills * (2 + game.bonuses.millBonus);
+            if (totalB > 2) {
+              rect(htx - 1, hty - 8, 18, 7, PAL.meadowDark);
+              drawCenteredMini(htx + 8, hty - 7, '+' + totalB + 'B', PAL.amberGlow);
+            }
+          }
+          if (game.selectedTool === 'cottage' || game.selectedTool === 'mill') {
+            for (const n of adjNeighbors(c, r)) {
+              if (n.kind === 'grove') {
+                rect(GRID_X + n.c * TILE_W + 4, GRID_Y + n.r * TILE_H - 6, 8, 6, PAL.meadowDark);
+                drawCenteredMini(GRID_X + n.c * TILE_W + 8, GRID_Y + n.r * TILE_H - 5, '+', PAL.amberGlow);
+              }
+            }
+          }
+        }
+      }
+
+      // Skiffs, Imps & Arrows
+      for (const s of game.skiffs) {
+        drawMatrix(s.x, s.y, SPRITES.skiff, SPRITE_COLORS, s.flip);
+      }
+      for (const imp of game.imps) {
+        const spr = imp.kind === 'brute' ? SPRITES.brute : SPRITES.imp;
+        const bob = Math.round(Math.abs(Math.sin(game.time * 12 + imp.x)) * -1);
+        drawMatrix(imp.x - Math.floor(spr[0].length / 2), imp.y - spr.length + 3 + bob, spr, SPRITE_COLORS, imp.flip, imp.hitT > 0);
+        if (imp.hp < imp.maxHp) {
+          rect(imp.x - 4, imp.y - spr.length, 8, 2, PAL.ink);
+          rect(imp.x - 4, imp.y - spr.length, Math.max(1, Math.round((imp.hp / imp.maxHp) * 8)), 1, PAL.berryRed);
+        }
+      }
+      for (const a of game.arrows) {
+        rect(a.x - 1, a.y - 1, 2, 2, PAL.cream);
+        px(a.x, a.y, PAL.amberGlow);
+      }
+
+      // Particles, Fireflies & Floating Popups
+      if (db > 0.45) {
+        for (let fi = 0; fi < 5; fi++) {
+          const fx = GRID_X + 18 + Math.round((Math.sin(game.time * 0.9 + fi * 1.7) * 0.5 + 0.5) * 124);
+          const fy = GRID_Y + 8 + Math.round((Math.cos(game.time * 1.1 + fi * 2.1) * 0.5 + 0.5) * 56);
+          if (((Math.floor(game.time * 3) + fi) % 3) !== 0) px(fx, fy, PAL.amberGlow);
+        }
+      }
+      for (const p of game.particles) {
+        rect(p.x, p.y, 1, 1, p.col);
+      }
+      for (const f of game.floats) {
+        drawCenteredMini(f.x, f.y, f.text, f.col, PAL.ink);
+      }
+    }
+
+    function renderHudAndPalette() {
+      // Top HUD
+      rect(0, 0, W, 14, PAL.woodDeep);
+      rect(0, 1, W, 11, PAL.woodDark);
+      rect(0, 12, W, 1, PAL.woodMid);
+
+      rect(3, 2, 42, 9, PAL.parchmentMid);
+      rect(4, 3, 40, 7, PAL.parchmentLit);
+      const dayLbl = game.phase === 'dusk' ? ('DUSK ' + game.day) : ('DAY ' + game.day);
+      drawMini(7, 4, dayLbl, PAL.woodDeep);
+
+      // Keep HP
+      rect(50, 4, 2, 2, PAL.berryRed);
+      rect(53, 4, 2, 2, PAL.berryRed);
+      rect(50, 6, 5, 2, PAL.berryRed);
+      rect(51, 8, 3, 1, PAL.berryRed);
+      px(52, 9, PAL.berryRed);
+      drawMini(57, 4, String(game.keepHp), PAL.cream, PAL.ink);
+
+      // Wood
+      rect(82, 4, 5, 4, PAL.woodLit);
+      rect(83, 5, 3, 2, PAL.thatchLit);
+      drawMini(89, 4, game.mode === 'peaceful' ? 'INF' : String(game.wood), PAL.thatchLit, PAL.ink);
+
+      // Berries
+      rect(118, 4, 4, 4, PAL.berryRed);
+      px(119, 3, PAL.meadowTop);
+      drawMini(124, 4, game.mode === 'peaceful' ? 'INF' : String(game.berries), PAL.berryLit, PAL.ink);
+
+      // Pop & Score
+      rect(152, 3, 3, 3, PAL.amberGlow);
+      rect(151, 6, 5, 3, PAL.cream);
+      drawMini(158, 4, String(game.pop), PAL.amberGlow, PAL.ink);
+
+      drawMini(176, 4, 'S:' + game.score, PAL.parchmentLit, PAL.ink);
+
+      // Mute & Home buttons
+      rect(216, 3, 10, 8, muted ? PAL.berryDark : PAL.woodMid);
+      drawCenteredMini(221, 4, muted ? 'X' : 'M', PAL.cream);
+      rect(228, 3, 10, 8, PAL.woodMid);
+      drawCenteredMini(233, 4, 'H', PAL.cream);
+
+      // Bottom Build Palette
+      rect(0, 113, W, 22, PAL.woodDeep);
+      rect(0, 114, W, 20, PAL.woodDark);
+      rect(0, 114, W, 1, PAL.woodLit);
+
+      const slots = [
+        { id: 'cottage', label: 'COTTAGE', col: PAL.thatchLit },
+        { id: 'grove',   label: 'GROVE',   col: PAL.berryRed },
+        { id: 'mill',    label: 'MILL',    col: PAL.cream },
+        { id: 'wall',    label: 'WALL',    col: PAL.stoneLit },
+        { id: 'tower',   label: 'TOWER',   col: PAL.brickMid }
+      ];
+
+      slots.forEach((slot, idx) => {
+        const bx = 2 + idx * 37;
+        const by = 116;
+        const bw = 35;
+        const bh = 17;
+        const active = game.selectedTool === slot.id;
+        const cost = effectiveCost(slot.id);
+        const afford = game.wood >= cost.wood && game.berries >= cost.berry;
+
+        rect(bx, by, bw, bh, active ? PAL.amberGlow : PAL.woodDeep);
+        rect(bx + 1, by + 1, bw - 2, bh - 2, active ? PAL.woodLit : PAL.woodMid);
+        rect(bx + 4, by + 3, 6, 5, PAL.woodDeep);
+        rect(bx + 5, by + 4, 4, 3, slot.col);
+        drawMini(bx + 13, by + 3, cost.wood + '/' + cost.berry, afford ? (active ? PAL.amberCore : PAL.parchmentLit) : PAL.berryLit, PAL.woodDeep);
+        drawCenteredMini(bx + 17, by + 10, slot.label, active ? PAL.cream : PAL.parchmentMid, PAL.woodDeep);
+      });
+
+      // Clear / Sell button
+      const sellActive = game.selectedTool === 'sell';
+      rect(187, 116, 14, 17, sellActive ? PAL.amberGlow : PAL.woodDeep);
+      rect(188, 117, 12, 15, PAL.brickDark);
+      drawCenteredMini(194, 122, 'X', PAL.cream, PAL.ink);
+
+      // Dusk Bell / Speed Button
+      const isDusk = game.phase === 'dusk';
+      rect(203, 116, 35, 17, PAL.ink);
+      rect(204, 117, 33, 15, isDusk ? PAL.duskMid : PAL.thatchMid);
+      rect(204, 117, 33, 2, isDusk ? PAL.amberGlow : PAL.amberGlow);
+      const bellLbl = isDusk ? (game.duskSpeed > 1 ? '2X' : '1X') : 'DUSK';
+      drawCenteredMini(220, 122, bellLbl, isDusk ? PAL.cream : PAL.ink);
+
+      // Notice Pill
+      if (game.noticeTimer > 0 && game.noticeText) {
+        const nw = measureMini(game.noticeText) + 10;
+        const nx = Math.round((W - nw) / 2);
+        rect(nx, 16, nw, 9, PAL.ink);
+        rect(nx + 1, 17, nw - 2, 7, PAL.parchmentLit);
+        drawCenteredMini(120, 18, game.noticeText, PAL.woodDeep);
+      }
+    }
+
+    function renderTitleOverlay() {
+      // Soft veil
+      ctx.fillStyle = 'rgba(20, 26, 24, 0.48)';
+      ctx.fillRect(0, 0, W, H);
+
+      // Title banner
+      rect(42, 8, 156, 23, PAL.pineDark);
+      rect(44, 10, 152, 19, PAL.meadowDark);
+      drawCenteredMini(120, 13, 'MOSSHOLD', PAL.cream, PAL.pineDark);
+      drawCenteredMini(120, 21, FULL_EDITION ? 'COZY ISLAND TACTICS - FULL' : 'COZY ISLAND TACTICS - DEMO', PAL.amberGlow, PAL.pineDark);
+
+      // Island Cards
+      ISLANDS.forEach((isl, idx) => {
+        const cx = 10 + idx * 56;
+        const cy = 36;
+        const sel = game.selectedIslandIdx === idx;
+        rect(cx, cy, 52, 36, sel ? PAL.amberGlow : PAL.ink);
+        rect(cx + 1, cy + 1, 50, 34, isl.locked ? PAL.stoneDeep : PAL.woodDark);
+        rect(cx + 3, cy + 3, 46, 12, isl.grassB);
+        rect(cx + 4, cy + 4, 44, 4, isl.grassTop);
+        drawCenteredMini(cx + 26, cy + 19, isl.name.split(' ')[0], isl.locked ? PAL.stoneLit : PAL.cream);
+        drawCenteredMini(cx + 26, cy + 26, isl.locked ? 'FULL' : 'READY', isl.locked ? PAL.thatchLit : PAL.amberGlow);
+      });
+
+      // Mode pills (Campaign / Endless / Peaceful in Full, Demo 5-Day in Demo)
+      const modes = FULL_EDITION
+        ? [['campaign', '15D STORY'], ['endless', 'ENDLESS'], ['peaceful', 'PEACEFUL']]
+        : [['campaign', '5-DAY DEMO']];
+      const mw = 54;
+      const startX = Math.round((W - (modes.length * (mw + 4) - 4)) / 2);
+      modes.forEach(([mid, label], i) => {
+        const mx = startX + i * (mw + 4);
+        const active = game.mode === mid;
+        rect(mx, 77, mw, 13, active ? PAL.amberGlow : PAL.ink);
+        rect(mx + 1, 78, mw - 2, 11, active ? PAL.woodLit : PAL.woodDark);
+        drawCenteredMini(mx + mw / 2, 81, label, active ? PAL.cream : PAL.parchmentMid);
+      });
+
+      // Play Button
+      rect(78, 96, 84, 18, PAL.ink);
+      rect(79, 97, 82, 16, PAL.thatchMid);
+      rect(79, 97, 82, 2, PAL.amberGlow);
+      drawCenteredMini(120, 102, 'START ISLAND', PAL.ink);
+
+      if (game.bestScore > 0) {
+        drawCenteredMini(120, 120, 'BEST SCORE: ' + game.bestScore, PAL.amberGlow, PAL.ink);
+      } else {
+        drawCenteredMini(120, 120, 'BUILD BY DAY, DEFEND AT DUSK!', PAL.cream, PAL.ink);
+      }
+    }
+
+    function renderDecreeOverlay() {
+      ctx.fillStyle = 'rgba(20, 16, 24, 0.56)';
+      ctx.fillRect(0, 14, W, H - 14);
+
+      rect(46, 18, 148, 13, PAL.ink);
+      rect(47, 19, 146, 11, PAL.parchmentMid);
+      rect(48, 20, 144, 9, PAL.parchmentLit);
+      drawCenteredMini(120, 22, 'DAWN DECREE - PICK 1', PAL.woodDeep);
+
+      game.decreeChoices.forEach((card, i) => {
+        const cx = 6 + i * 78;
+        const cy = 35;
+        const cw = 72;
+        const ch = 79;
+        const hovered = game.hoverDecree === i;
+        rect(cx, cy, cw, ch, hovered ? PAL.amberGlow : PAL.ink);
+        rect(cx + 1, cy + 1, cw - 2, ch - 2, hovered ? PAL.thatchLit : PAL.woodDark);
+        rect(cx + 3, cy + 3, cw - 6, ch - 6, hovered ? PAL.parchmentLit : PAL.parchmentMid);
+        rect(cx + 4, cy + 4, cw - 8, 2, PAL.cream);
+
+        rect(cx + 27, cy + 6, 18, 7, PAL.woodDeep);
+        drawCenteredMini(cx + 36, cy + 7, '[' + (i + 1) + ']', hovered ? PAL.amberGlow : PAL.cream);
+
+        rect(cx + 24, cy + 15, 24, 21, PAL.parchmentDark);
+        rect(cx + 25, cy + 16, 22, 19, PAL.woodDeep);
+        const mat = SPRITES[card.crest] || SPRITES.crestCrown;
+        drawMatrix(cx + 25 + Math.round((22 - mat[0].length) / 2), cy + 16 + Math.round((19 - mat.length) / 2), mat, SPRITE_COLORS);
+
+        drawCenteredMini(cx + 36, cy + 41, card.t1, PAL.woodDeep);
+        drawCenteredMini(cx + 36, cy + 48, card.t2, PAL.woodDeep);
+        rect(cx + 12, cy + 56, 48, 1, PAL.parchmentDark);
+        drawCenteredMini(cx + 36, cy + 60, card.d1, PAL.brickDark);
+        drawCenteredMini(cx + 36, cy + 67, card.d2, PAL.brickDark);
+      });
+
+      rect(54, 118, 132, 11, PAL.woodDeep);
+      rect(55, 119, 130, 9, PAL.woodDark);
+      drawCenteredMini(120, 121, 'CLICK A CARD OR PRESS 1-3', PAL.cream);
+    }
+
+    function renderEndOverlay(isVictory) {
+      ctx.fillStyle = 'rgba(20, 22, 24, 0.65)';
+      ctx.fillRect(0, 14, W, H - 14);
+      rect(34, 28, 172, 82, PAL.ink);
+      rect(36, 30, 168, 78, PAL.parchmentMid);
+      rect(38, 32, 164, 74, PAL.parchmentLit);
+
+      const title = isVictory
+        ? (FULL_EDITION ? 'MOSSHOLD SAVED!' : 'DEMO COMPLETE!')
+        : 'THE KEEP FELL!';
+      drawCenteredMini(120, 38, title, isVictory ? PAL.meadowDark : PAL.berryDark);
+      drawCenteredMini(120, 49, 'DAY ' + game.day + '   SCORE: ' + game.score, PAL.woodDeep);
+      drawCenteredMini(120, 57, 'BEST: ' + game.bestScore, PAL.woodMid);
+
+      if (isVictory && !FULL_EDITION) {
+        drawCenteredMini(120, 68, '4 ISLANDS + ENDLESS IN FULL!', PAL.brickDark);
+      }
+
+      if (isVictory && FULL_EDITION && game.mode === 'campaign') {
+        rect(44, 79, 72, 17, PAL.ink);
+        rect(45, 80, 70, 15, PAL.meadowMid);
+        drawCenteredMini(80, 85, 'ENDLESS', PAL.cream);
+
+        rect(124, 79, 72, 17, PAL.ink);
+        rect(125, 80, 70, 15, PAL.thatchMid);
+        drawCenteredMini(160, 85, 'ISLANDS', PAL.ink);
+      } else {
+        rect(74, 79, 92, 17, PAL.ink);
+        rect(75, 80, 90, 15, PAL.thatchMid);
+        drawCenteredMini(120, 85, 'PLAY AGAIN', PAL.ink);
+      }
+    }
+
+    // ------------------------------------------------------------------------
+    // Input Handling
+    // ------------------------------------------------------------------------
+    function canvasPos(e) {
+      const r = canvas.getBoundingClientRect();
+      return {
+        x: ((e.clientX - r.left) * W) / r.width,
+        y: ((e.clientY - r.top) * H) / r.height
+      };
+    }
+
+    canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+
+    canvas.addEventListener('pointermove', (e) => {
+      const { x, y } = canvasPos(e);
+      if (game.screen === 'play') {
+        if (x >= GRID_X && x < GRID_X + GRID_COLS * TILE_W && y >= GRID_Y && y < GRID_Y + GRID_ROWS * TILE_H) {
+          game.hoverTile = {
+            c: Math.floor((x - GRID_X) / TILE_W),
+            r: Math.floor((y - GRID_Y) / TILE_H)
+          };
+        } else {
+          game.hoverTile = null;
+        }
+      } else if (game.screen === 'decree') {
+        let hd = null;
+        for (let i = 0; i < 3; i++) {
+          const cx = 6 + i * 78;
+          if (x >= cx && x <= cx + 72 && y >= 35 && y <= 114) hd = i;
+        }
+        game.hoverDecree = hd;
+      }
+    });
+
+    canvas.addEventListener('pointerdown', (e) => {
+      ensureAudio();
+      const { x, y } = canvasPos(e);
+
+      if (game.screen === 'title') {
+        for (let idx = 0; idx < ISLANDS.length; idx++) {
+          const cx = 10 + idx * 56;
+          if (x >= cx && x <= cx + 52 && y >= 36 && y <= 72) {
+            if (ISLANDS[idx].locked) {
+              SFX.nope();
+            } else {
+              game.selectedIslandIdx = idx;
+              SFX.build('cottage');
+            }
+            return;
+          }
+        }
+        const modes = FULL_EDITION ? ['campaign', 'endless', 'peaceful'] : ['campaign'];
+        const mw = 54;
+        const startX = Math.round((W - (modes.length * (mw + 4) - 4)) / 2);
+        for (let i = 0; i < modes.length; i++) {
+          const mx = startX + i * (mw + 4);
+          if (x >= mx && x <= mx + mw && y >= 77 && y <= 90) {
+            game.mode = modes[i];
+            SFX.build('grove');
+            return;
+          }
+        }
+        if (x >= 78 && x <= 162 && y >= 96 && y <= 114) {
+          startNewRun(game.selectedIslandIdx, game.mode);
+        }
+        return;
+      }
+
+      if (game.screen === 'decree') {
+        for (let i = 0; i < 3; i++) {
+          const cx = 6 + i * 78;
+          if (x >= cx && x <= cx + 72 && y >= 35 && y <= 114) {
+            pickDecree(i);
+            return;
+          }
+        }
+        return;
+      }
+
+      if (game.screen === 'gameover' || game.screen === 'victory') {
+        if (game.screen === 'victory' && FULL_EDITION && game.mode === 'campaign') {
+          if (x >= 44 && x <= 116 && y >= 79 && y <= 96) {
+            game.mode = 'endless';
+            game.maxDays = 9999;
+            openDecreeOrAdvanceDay();
+            return;
+          }
+          if (x >= 124 && x <= 196 && y >= 79 && y <= 96) {
+            game.screen = 'title';
+            return;
+          }
+        } else if (x >= 74 && x <= 166 && y >= 79 && y <= 96) {
+          game.screen = 'title';
+          return;
+        }
+        return;
+      }
+
+      // Active gameplay HUD buttons
+      if (y <= 13) {
+        if (x >= 216 && x <= 226) { muted = !muted; return; }
+        if (x >= 228 && x <= 238) { game.screen = 'title'; return; }
+      }
+
+      // Bottom build palette
+      if (y >= 114) {
+        const slots = ['cottage', 'grove', 'mill', 'wall', 'tower'];
+        for (let idx = 0; idx < slots.length; idx++) {
+          const bx = 2 + idx * 37;
+          if (x >= bx && x <= bx + 35) {
+            game.selectedTool = slots[idx];
+            SFX.build(slots[idx]);
+            return;
+          }
+        }
+        if (x >= 187 && x <= 201) {
+          game.selectedTool = 'sell';
+          SFX.refund();
+          return;
+        }
+        if (x >= 203 && x <= 238) {
+          if (game.phase === 'day') beginDusk();
+          else if (game.phase === 'dusk') game.duskSpeed = game.duskSpeed > 1 ? 1 : 2;
+          return;
+        }
+      }
+
+      // Island Grid Click
+      if (x >= GRID_X && x < GRID_X + GRID_COLS * TILE_W && y >= GRID_Y && y < GRID_Y + GRID_ROWS * TILE_H) {
+        const c = Math.floor((x - GRID_X) / TILE_W);
+        const r = Math.floor((y - GRID_Y) / TILE_H);
+        if (game.phase === 'day') {
+          if (e.button === 2) refundOrChopTile(c, r);
+          else placeBuilding(c, r);
+        } else {
+          flashNotice('WAIT UNTIL DAWN TO BUILD');
+        }
+      }
+    });
+
+    window.addEventListener('keydown', (e) => {
+      if (['Space', 'ArrowUp', 'ArrowDown'].includes(e.code)) e.preventDefault();
+      ensureAudio();
+
+      if (e.key === 'm' || e.key === 'M') {
+        muted = !muted;
+        return;
+      }
+
+      if (game.screen === 'title') {
+        if (e.code === 'Space' || e.key === 'Enter') {
+          startNewRun(game.selectedIslandIdx, game.mode);
+        }
+        return;
+      }
+
+      if (game.screen === 'decree') {
+        if (e.key === '1') pickDecree(0);
+        if (e.key === '2') pickDecree(1);
+        if (e.key === '3') pickDecree(2);
+        return;
+      }
+
+      if (game.screen === 'play') {
+        const map = { '1': 'cottage', '2': 'grove', '3': 'mill', '4': 'wall', '5': 'tower', 'x': 'sell', 'X': 'sell' };
+        if (map[e.key]) {
+          game.selectedTool = map[e.key];
+          SFX.build(map[e.key]);
+        } else if (e.code === 'Space') {
+          if (game.phase === 'day') beginDusk();
+          else if (game.phase === 'dusk') game.duskSpeed = game.duskSpeed > 1 ? 1 : 2;
+        }
+      }
+    });
+
+    // ------------------------------------------------------------------------
+    // Main Loop
+    // ------------------------------------------------------------------------
+    startNewRun(0, 'campaign');
+    game.screen = 'title';
+
+    let lastTs = performance.now();
+    function frame(now) {
+      const dt = Math.min(0.05, (now - lastTs) / 1000);
+      lastTs = now;
+      game.time += dt;
+
+      if (game.noticeTimer > 0) game.noticeTimer = Math.max(0, game.noticeTimer - dt);
+
+      // Update tile spawn spring animations
+      for (let r = 0; r < GRID_ROWS; r++) {
+        for (let c = 0; c < GRID_COLS; c++) {
+          const t = game.grid[r][c];
+          if (t.animT < 1) t.animT = Math.min(1, t.animT + dt * 4.5);
+        }
+      }
+
+      // Update particles & floats
+      for (let i = game.particles.length - 1; i >= 0; i--) {
+        const p = game.particles[i];
+        p.life -= dt;
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+        p.vy += 38 * dt;
+        if (p.life <= 0) game.particles.splice(i, 1);
+      }
+      for (let i = game.floats.length - 1; i >= 0; i--) {
+        const f = game.floats[i];
+        f.life -= dt;
+        f.y -= 9 * dt;
+        if (f.life <= 0) game.floats.splice(i, 1);
+      }
+
+      if (game.screen === 'play') {
+        if (game.phase === 'dusk') updateDusk(dt);
+        else if (game.phase === 'dawn') {
+          game.duskBlend = Math.max(0, game.duskBlend - dt * 1.3);
+          game.dawnTimer -= dt;
+          if (game.dawnTimer <= 0) openDecreeOrAdvanceDay();
+        }
+      }
+
+      stepMusic(dt);
+
+      // Render Frame
+      ctx.clearRect(0, 0, W, H);
+      renderWorld();
+      renderHudAndPalette();
+      if (game.screen === 'title') renderTitleOverlay();
+      else if (game.screen === 'decree') renderDecreeOverlay();
+      else if (game.screen === 'gameover') renderEndOverlay(false);
+      else if (game.screen === 'victory') renderEndOverlay(true);
+
+      requestAnimationFrame(frame);
+    }
+
+    requestAnimationFrame(frame);
+  })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Steam Deck 1280x800 (16:10) Scaling &amp; Overscan Margin Calculator (2026) — Camber Labs</title>
+  <meta name="description" content="Verify integer scaling and top/bottom bar sizes when running 16:9 indie games on Steam Deck 1280x800." />
+  <link rel="canonical" href="https://camberlabs.github.io/tools/steam-deck-1280x800-aspect-ratio-calculator/" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Steam Deck 1280x800 (16:10) Scaling &amp; Overscan Margin Calculator (2026) — Camber Labs" />
+  <meta property="og:description" content="Verify integer scaling and top/bottom bar sizes when running 16:9 indie games on Steam Deck 1280x800." />
+  <meta property="og:url" content="https://camberlabs.github.io/tools/steam-deck-1280x800-aspect-ratio-calculator/" />
+  <link rel="stylesheet" href="/assets/styles.css" />
+  <script type="application/ld+json">[{"@context":"https://schema.org","@type":"WebApplication","name":"Steam Deck 1280x800 (16:10) Scaling & Overscan Margin Calculator (2026) — Camber Labs","url":"https://camberlabs.github.io/tools/steam-deck-1280x800-aspect-ratio-calculator/","applicationCategory":"DeveloperApplication","operatingSystem":"All","offers":{"@type":"Offer","price":"0","priceCurrency":"GBP"},"description":"Verify integer scaling and top/bottom bar sizes when running 16:9 indie games on Steam Deck 1280x800."},{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://camberlabs.github.io/"},{"@type":"ListItem","position":2,"name":"Engine Calculators","item":"https://camberlabs.github.io/directory/"},{"@type":"ListItem","position":3,"name":"Steam Deck Verified","item":"https://camberlabs.github.io/tools/steam-deck-1280x800-aspect-ratio-calculator/"}]}]</script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="container nav-inner">
+      <a class="brand-logo" href="/">
+        <span class="brand-mark">CL</span>
+        <span>Camber Labs</span>
+      </a>
+      <nav class="nav-links" aria-label="Primary">
+        <a href="/">Studio Hub</a>
+        <a href="/games/">Cozy Micro-Games</a>
+        <a href="/suite/">5-in-1 Dev Suite (£16.99)</a>
+        <a href="/storefronts/steam-revenue-calculator/">Steam Revenue Calc</a>
+        <a href="/tools/47-tile-blob-autotile-atlas-calculator/">Engine Math Tools</a>
+        <a href="/directory/">All Calculators</a>
+        <a href="https://camberlabs.github.io/marginpilot/">SaaS MarginPilot</a>
+        <a class="nav-cta" href="https://itch.io/s/218099/camber-labs-game-maker-toolkit-all-5-tools" target="_blank" rel="noopener">Get 5-in-1 Bundle →</a>
+      </nav>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="container">
+      <nav class="breadcrumbs" aria-label="Breadcrumb"><a href="/">Home</a> <span>/</span> <a href="/directory/">Engine Calculators</a> <span>/</span> <span>Steam Deck Verified</span></nav>
+      <div class="hero-badge">● Engine &amp; Dev Math · Steam Deck Verified</div>
+      <h1>Steam Deck 1280x800 (16:10) Scaling &amp; Overscan Margin Calculator</h1>
+      <p class="hero-sub">Verify integer scaling and top/bottom bar sizes when running 16:9 indie games on Steam Deck 1280x800.</p>
+    </div>
+  </section>
+
+  <main>
+    
+    
+  <section class="section">
+    <div class="container">
+      <div class="calc-grid">
+        <div class="panel">
+          <div class="panel-title">
+            <span>Adjust Parameters</span>
+            <span style="font-size:0.74rem;color:#059669;">Live Engine Math</span>
+          </div>
+          
+            <div class="control-group">
+              <div class="control-header"><label for="tf-baseW">Virtual Base Width (px)</label></div>
+              <input id="tf-baseW" type="number" data-tool-field="baseW" min="64" max="3840" step="1" value="320" />
+            </div>
+            <div class="control-group">
+              <div class="control-header"><label for="tf-baseH">Virtual Base Height (px)</label></div>
+              <input id="tf-baseH" type="number" data-tool-field="baseH" min="64" max="2160" step="1" value="180" />
+            </div>
+            <div class="control-group">
+              <div class="control-header"><label for="tf-targetW">Target Screen Width (px)</label></div>
+              <input id="tf-targetW" type="number" data-tool-field="targetW" min="320" max="7680" step="1" value="1280" />
+            </div>
+            <div class="control-group">
+              <div class="control-header"><label for="tf-targetH">Target Screen Height (px)</label></div>
+              <input id="tf-targetH" type="number" data-tool-field="targetH" min="240" max="4320" step="1" value="800" />
+            </div>
+            <div class="control-group">
+              <div class="control-header"><label for="tf-ppu">Pixels Per Unit (Unity PPU)</label></div>
+              <input id="tf-ppu" type="number" data-tool-field="ppu" min="1" max="256" step="1" value="16" />
+            </div>
+            <div class="control-group">
+              <div class="control-header"><label for="tf-trauma">Camera Shake Trauma (0–1)</label></div>
+              <input id="tf-trauma" type="number" data-tool-field="trauma" min="0" max="1" step="0.05" value="0.5" />
+            </div>
+            <div class="control-group">
+              <div class="control-header"><label for="tf-decayPerSec">Trauma Decay Rate (/sec)</label></div>
+              <input id="tf-decayPerSec" type="number" data-tool-field="decayPerSec" min="0.1" max="10" step="0.1" value="1.5" />
+            </div>
+        </div>
+
+        <div class="panel">
+          <div class="kpi-strip tabular">
+            
+              <div class="kpi-card highlight">
+                <div class="kpi-label">Integer Scale Factor</div>
+                <div class="kpi-value" id="tool-kpi-val-0">4× Exact</div>
+                <div class="kpi-sub" id="tool-kpi-sub-0">Renders 1280×720 inside 1280×800</div>
+              </div>
+            
+              <div class="kpi-card ">
+                <div class="kpi-label">Unity Ortho Size</div>
+                <div class="kpi-value" id="tool-kpi-val-1">5.625</div>
+                <div class="kpi-sub" id="tool-kpi-sub-1">At PPU = 16 (11.3 vertical world units)</div>
+              </div>
+            
+              <div class="kpi-card ">
+                <div class="kpi-label">Trauma² Shake Output</div>
+                <div class="kpi-value" id="tool-kpi-val-2">25.0%</div>
+                <div class="kpi-sub" id="tool-kpi-sub-2">Trauma 0.50 decays in 333ms</div>
+              </div>
+            
+          </div>
+
+          <h2 style="font-size:1.08rem;margin:6px 0 8px;">Deterministic Output Breakdown</h2>
+          <table class="data-table">
+            <thead><tr><th>Metric</th><th>Calculated Value</th></tr></thead>
+            <tbody id="tool-breakdown-body">
+              <tr><td>Virtual Base Resolution</td><td class="tabular"><strong>320 × 180 px</strong></td></tr><tr><td>Target Display Resolution</td><td class="tabular"><strong>1280 × 800 px</strong></td></tr><tr><td>Clean Integer Viewport Size</td><td class="tabular"><strong>1280 × 720 px (4x multiplier)</strong></td></tr><tr><td>Black Borders / Expand Margin</td><td class="tabular"><strong>Horizontal: 0px/side · Vertical: 40px/side</strong></td></tr><tr><td>Exact Fit Check (720p / 1080p / 4K)</td><td class="tabular"><strong>720p✓ · 1080p✓ · 4K✓</strong></td></tr><tr><td>Unity URP Camera.orthographicSize</td><td class="tabular"><strong>5.6250 (half-height in world units)</strong></td></tr><tr><td>Camera Shake Intensity (trauma²)</td><td class="tabular"><strong>25.0% -&gt; recovers in 0.33s</strong></td></tr>
+            </tbody>
+          </table>
+
+          <div style="margin-top:18px;">
+            <strong style="font-size:0.9rem;">Formula &amp; Viewport Stretch Expand</strong>
+            <p style="margin:4px 0 6px;font-size:0.86rem;color:#475569;">320x180 -&gt; 4x scale = 1280x720 with clean 40px top + 40px bottom bars on 1280x800 Deck!</p>
+            <pre class="code-box">// Or use aspect=&quot;expand&quot; on 16:10 displays so top/bottom reveal +20 world pixels instead of black bars</pre>
+          </div>
+
+          
+  <aside class="suite-banner">
+    <div>
+      <span class="suite-badge">Camber Labs · Instant Download · Direct UK/Global Checkout</span>
+      <h3>Automate This Workflow Offline with JuiceForge VFX Lab (£6.99) — Or Grab All 5 Studios (£16.99)</h3>
+      <p>2D Pixel Particle, Hit-Spark, Explosion &amp; Animated Flipbook PNG Exporter. Includes free browser demo + downloadable Windows/macOS/Linux ZIP (24 Animated 512x64 Flipbook PNGs, Godot 4 GPUParticles2D &amp; Shader (.gdshader), Unity URP Flipbook &amp; Trauma Shake (.cs)). Upgrade to the 5-in-1 Pro Bundle to save 51% vs £34.95 separately.</p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;">
+        <a class="btn-emerald" href="https://itch.io/s/218099/camber-labs-game-maker-toolkit-all-5-tools" target="_blank" rel="noopener">Get 5-in-1 Bundle (£16.99 · Save 51%) →</a>
+        <a class="btn-secondary" href="https://camberlabs.itch.io/juiceforge-vfx-lab" target="_blank" rel="noopener">Play JuiceForge Free Demo / Buy £6.99</a>
+        <a class="btn-secondary" href="/suite/">Inspect All 5 Studios</a>
+      </div>
+    </div>
+    <div class="suite-price-box">
+      <div style="margin-bottom:6px;">
+        <span class="price-strike">£34.95</span>
+        <span class="price-now tabular">£16.99</span>
+      </div>
+      <div style="font-size:0.78rem;color:#cbd5e1;margin-bottom:10px;">All 5 Offline Studios + Godot 4 &amp; Unity Scripts</div>
+      <a class="btn-primary" style="width:100%;" href="https://itch.io/s/218099/camber-labs-game-maker-toolkit-all-5-tools" target="_blank" rel="noopener">Unlock Full Suite →</a>
+    </div>
+  </aside>
+        </div>
+      </div>
+    </div>
+    <script type="application/json" id="cl-boot-data">{"kind":"tool","mode":"pixel-camera","defaults":{"baseW":320,"baseH":180,"targetW":1280,"targetH":800,"ppu":16,"trauma":0.5,"decayPerSec":1.5}}</script>
+  </section>
+    <section class="section" style="padding-top:0;">
+      <div class="container">
+        <div class="panel">
+          <h2 style="margin-top:0;">More 2D VFX, Particles &amp; Camera Juice Calculators</h2>
+          <div class="card-grid">
+            <a class="studio-card" href="/tools/spritesheet-rgba8888-vram-pot-calculator/"><span class="tag-badge" style="margin-left:0;width:fit-content;">GPU VRAM Sizer</span><strong>Spritesheet VRAM &amp; Power-of-Two (POT) GPU Atlas Calculator</strong><span>RGBA8888 Bytes = sheetW * sheetH * 4 (or POT_W * POT_H * 4 on non-NPOT hardware)</span></a><a class="studio-card" href="/tools/vfx-flipbook-rows-cols-packer-calculator/"><span class="tag-badge" style="margin-left:0;width:fit-content;">Flipbook Packer</span><strong>VFX Flipbook Spritesheet Rows × Columns Sizer</strong><span>rows = ceil(frameCount / cols); emptyWaste = cols*rows - frameCount</span></a><a class="studio-card" href="/tools/mobile-astc-etc2-vs-rgba-vram-calculator/"><span class="tag-badge" style="margin-left:0;width:fit-content;">Texture Compression</span><strong>Mobile ASTC / BC7 Compressed vs RGBA8888 Texture Memory Calculator</strong><span>VRAM Bytes = totalPixels * (bitsPerPixel / 8) * (mipmaps ? 1.3333 : 1.0)</span></a><a class="studio-card" href="/tools/2d-particle-burst-overdraw-fillrate-calculator/"><span class="tag-badge" style="margin-left:0;width:fit-content;">Particle Performance</span><strong>2D Particle Overdraw &amp; Flipbook Sprite Budget Calculator</strong><span>Small 32x32 flipbooks reduce fragment shader overdraw &amp; fit inside L1/L2 GPU texture cache</span></a><a class="studio-card" href="/tools/godot-4-animatedsprite2d-sheet-calculator/"><span class="tag-badge" style="margin-left:0;width:fit-content;">Godot Sprite2D</span><strong>Godot 4 AnimatedSprite2D &amp; Sprite2D hframes/vframes Calculator</strong><span>Set hframes = cols, vframes = ceil(frameCount / cols), zero padding when using exact grid split</span></a><a class="studio-card" href="/tools/sprite-atlas-2048-vs-4096-pack-estimator/"><span class="tag-badge" style="margin-left:0;width:fit-content;">Atlas Limit Check</span><strong>2048x2048 vs 4096x4096 Master Sprite Atlas VRAM Calculator</strong><span>A single 4096x4096 RGBA8 texture consumes 64 MB uncompressed (85.3 MB with mipmaps)</span></a>
+          </div>
+        </div>
+      </div>
+    </section>
+  
+    
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div>
+          <h4>Camber Labs — Indie Game-Dev Studios</h4>
+          <p style="font-size:0.86rem;line-height:1.6;">
+            Five browser-tested offline studios for procedural game audio, autotiles, 2D VFX flipbooks, 9-slice HUDs &amp; combat math — plus 150 free browser calculators.
+          </p>
+          <p style="font-size:0.8rem;color:#94a3b8;">
+            Zero runtime fees · Works in Godot 4, Unity, GameMaker &amp; Tiled · Contact <a href="mailto:camberlabs@gmail.com">camberlabs@gmail.com</a>
+          </p>
+        </div>
+        <div>
+          <h4>Live itch.io Games &amp; Studios</h4>
+          <ul>
+            <li><a href="/games/cinderpit/">Cinderpit (£3.99 · Free Demo)</a></li><li><a href="/games/sunlit-creek/">Sunlit Creek (£2.99 · Free Demo)</a></li><li><a href="/games/pip-and-clover/">pip &amp; clover (£3.49 · Free Demo)</a></li><li><a href="/games/mosshold/">Mosshold (£3.99 · Free Demo)</a></li>
+            <li><a href="https://camberlabs.itch.io/bitforge-studio" target="_blank" rel="noopener">BitForge Studio (£6.99)</a></li><li><a href="https://camberlabs.itch.io/tileforge-studio" target="_blank" rel="noopener">TileForge Studio (£6.99)</a></li><li><a href="https://camberlabs.itch.io/juiceforge-vfx-lab" target="_blank" rel="noopener">JuiceForge VFX Lab (£6.99)</a></li><li><a href="https://camberlabs.itch.io/uiforge-hud-studio" target="_blank" rel="noopener">UIForge Studio (£6.99)</a></li><li><a href="https://camberlabs.itch.io/balanceforge-simulator" target="_blank" rel="noopener">BalanceForge Simulator (£6.99)</a></li>
+            <li><a href="https://itch.io/s/218099/camber-labs-game-maker-toolkit-all-5-tools" target="_blank" rel="noopener"><strong>5-in-1 Pro Bundle (£16.99 · Save 51%)</strong></a></li>
+          </ul>
+        </div>
+        <div>
+          <h4>Top Storefront &amp; Launch Tools</h4>
+          <ul>
+            <li><a href="/storefronts/steam-revenue-calculator/">Steam Revenue Calculator</a></li>
+            <li><a href="/storefronts/itch-io-revenue-calculator/">itch.io Direct Stripe Calc</a></li>
+            <li><a href="/vs/steam-vs-itch-io/">Steam vs itch.io Payouts</a></li>
+            <li><a href="/vs/steam-vs-epic-games-store/">Steam vs Epic 88/12</a></li>
+            <li><a href="/scenarios/steam-14-99-game-5000-copies-net-revenue/">$14.99 × 5k Steam Launch</a></li>
+            <li><a href="/directory/">Full 150-Tool Directory</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4>SaaS &amp; Founder Network</h4>
+          <ul>
+            <li><a href="https://camberlabs.github.io/marginpilot/">MarginPilot (200+ SaaS Calculators)</a></li>
+            <li><a href="https://camberlabs.gumroad.com/l/founder-cfo-kit-2026?wanted=true" target="_blank" rel="noopener">2026 Founder CFO Kit ($19)</a></li>
+            <li><a href="/sitemap.xml">XML Sitemap</a></li>
+            <li><a href="/llms.txt">llms.txt (AI Index)</a></li>
+            <li><a href="/llms-full.txt">llms-full.txt</a></li>
+            <li><a href="/api/2026-game-store-fees.json">Store Fees JSON API</a></li>
+          </ul>
+        </div>
+      </div>
+      <div style="border-top:1px solid #1e293b;padding-top:16px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;font-size:0.82rem;color:#94a3b8;">
+        <span>© 2026 Camber Labs · <a href="https://camberlabs.itch.io" target="_blank" rel="noopener">camberlabs.itch.io</a></span>
+        <span>Updated 2026-11-15</span>
+      </div>
+    </div>
+  </footer>
+  <script src="/assets/gamedev-app.js" defer></script>
+</body>
+</html>
